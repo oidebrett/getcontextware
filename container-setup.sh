@@ -208,9 +208,12 @@ EOF
 echo "✅ dynamic_config.yml created"
 
 # Set this to true to enable CrowdSec config setup
-ENABLE_CROWDSEC=true
+ENABLE_CROWDSEC=false
+if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
+  ENABLE_CROWDSEC=true
+fi
 
-if [ "$ENABLE_CROWDSEC" = true ]; then
+if [ "$ENABLE_CROWDSEC" = "true" ]; then
     echo "🛡️  Setting up CrowdSec directories and config files..."
 
     mkdir -p /host-setup/config/crowdsec/notifications

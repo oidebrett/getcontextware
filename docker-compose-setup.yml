@@ -19,10 +19,9 @@ services:
       sh -c "
         # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
         ENABLE_CROWDSEC=false
-        if [ ! -z "$$CROWDSEC_ENROLLMENT_KEY" ]; then
+        if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
           ENABLE_CROWDSEC=true
         fi
-
         echo '🚀 Starting Pangolin setup container...'
 
         # Install required tools
