@@ -113,8 +113,12 @@ experimental:
       version: "v1.2.0"
 
 log:
-  level: "INFO"
-  format: "common"
+    level: "INFO"
+    format: "json"
+
+accessLog:
+    filePath: "/var/log/traefik/access.log"
+    format: json
 
 certificatesResolvers:
   letsencrypt:
@@ -203,6 +207,172 @@ EOF
 
 echo "✅ dynamic_config.yml created"
 
+# Set this to true to enable CrowdSec config setup
+ENABLE_CROWDSEC=true
+
+if [ "$ENABLE_CROWDSEC" = true ]; then
+    echo "🛡️  Setting up CrowdSec directories and config files..."
+
+    mkdir -p /host-setup/config/crowdsec/notifications
+    mkdir -p /host-setup/config/crowdsec/hub
+    mkdir -p /host-setup/config/crowdsec/patterns
+    mkdir -p /host-setup/config/crowdsec_logs
+    mkdir -p /host-setup/config/traefik/conf
+    mkdir -p /host-setup/config/traefik/logs
+
+    cat > /host-setup/config/crowdsec/acquis.yaml << EOF
+filenames:
+ - /var/log/auth.log
+ - /var/log/syslog
+labels:
+  type: syslog
+---
+poll_without_inotify: false
+filenames:
+  - /var/log/traefik/*.log
+labels:
+  type: traefik
+---
+listen_addr: 0.0.0.0:7422 
+appsec_config: crowdsecurity/appsec-default
+name: myAppSecComponent
+source: appsec
+labels:
+  type: appsec
+EOF
+
+    cat > /host-setup/config/crowdsec/config.yaml << EOF
+common:
+  daemonize: false
+  log_media: stdout
+  log_level: info
+  log_dir: /var/log/
+config_paths:
+  config_dir: /etc/crowdsec/
+  data_dir: /var/lib/crowdsec/data/
+  simulation_path: /etc/crowdsec/simulation.yaml
+  hub_dir: /etc/crowdsec/hub/
+  index_path: /etc/crowdsec/hub/.index.json
+  notification_dir: /etc/crowdsec/notifications/
+  plugin_dir: /usr/local/lib/crowdsec/plugins/
+crowdsec_service:
+  acquisition_path: /etc/crowdsec/acquis.yaml
+  acquisition_dir: /etc/crowdsec/acquis.d
+  parser_routines: 1
+plugin_config:
+  user: nobody
+  group: nobody
+cscli:
+  output: human
+db_config:
+  log_level: info
+  type: sqlite
+  db_path: /var/lib/crowdsec/data/crowdsec.db
+  flush:
+    max_items: 5000
+    max_age: 7d
+  use_wal: false
+api:
+  client:
+    insecure_skip_verify: false
+    credentials_path: /etc/crowdsec/local_api_credentials.yaml
+  server:
+    log_level: info
+    listen_uri: 0.0.0.0:8080
+    profiles_path: /etc/crowdsec/profiles.yaml
+    trusted_ips:
+      - 127.0.0.1
+      - ::1
+    online_client:
+      credentials_path: /etc/crowdsec/online_api_credentials.yaml
+    enable: true
+prometheus:
+  enabled: true
+  level: full
+  listen_addr: 0.0.0.0
+  listen_port: 6060
+EOF
+
+    cat > /host-setup/config/crowdsec/profiles.yaml << EOF
+name: captcha_remediation
+filters:
+  - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() contains "http"
+decisions:
+  - type: captcha
+    duration: 4h
+on_success: break
+
+---
+name: default_ip_remediation
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Ip"
+decisions:
+ - type: ban
+   duration: 4h
+on_success: break
+
+---
+name: default_range_remediation
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Range"
+decisions:
+ - type: ban
+   duration: 4h
+on_success: break
+EOF
+
+    cat > /host-setup/config/crowdsec/user.yaml << EOF
+common:
+  daemonize: false
+  log_media: stdout
+  log_level: info
+  log_dir: /var/log/
+config_paths:
+  config_dir: /etc/crowdsec/
+  data_dir: /var/lib/crowdsec/data
+crowdsec_service:
+  parser_routines: 1
+cscli:
+  output: human
+db_config:
+  type: sqlite
+  db_path: /var/lib/crowdsec/data/crowdsec.db
+  user: crowdsec
+  password: crowdsec
+  db_name: crowdsec
+  host: "127.0.0.1"
+  port: 3306
+api:
+  client:
+    insecure_skip_verify: false
+    credentials_path: /etc/crowdsec/local_api_credentials.yaml
+  server:
+    listen_uri: 127.0.0.1:8080
+    profiles_path: /etc/crowdsec/profiles.yaml
+    online_client:
+      credentials_path: /etc/crowdsec/online_api_credentials.yaml
+prometheus:
+  enabled: true
+  level: full
+EOF
+
+    cat > /host-setup/config/crowdsec/simulation.yaml << EOF
+simulation: false
+# exclusions:
+#  - crowdsecurity/ssh-bf
+EOF
+
+    cat > /host-setup/config/crowdsec/local_api_credentials.yaml << EOF
+url: http://0.0.0.0:8080
+login: localhost
+password: UNIQUE_PASSWORD_WILL_BE_INSERTED_HERE
+EOF
+
+    touch /host-setup/config/crowdsec/online_api_credentials.yaml
+
+    echo "✅ CrowdSec configuration files created"
+fi
+
 # Create a summary file for the user
 cat > /host-setup/DEPLOYMENT_INFO.txt << EOF
 🚀 Pangolin + CrowdSec + Traefik Stack Deployment
@@ -225,9 +395,35 @@ Deployment completed at: $(date)
 ├── config.yml
 ├── letsencrypt/          # Let's Encrypt certificates
 └── traefik/
-    └── rules/
-        └── dynamic_config.yml
-    └── traefik_config.yml
+    ├── rules/
+    │   └── dynamic_config.yml
+    ├── traefik_config.yml
+    ├── conf/             # CAPTCHA template support
+    └── logs/             # Traefik logs
+
+EOF
+
+if [ "$ENABLE_CROWDSEC" = true ]; then
+cat >> /host-setup/DEPLOYMENT_INFO.txt << EOF
+└── crowdsec/
+    ├── acquis.yaml
+    ├── config.yaml
+    ├── profiles.yaml
+    ├── user.yaml
+    ├── simulation.yaml
+    ├── local_api_credentials.yaml
+    └── online_api_credentials.yaml
+📁 Additional:
+./crowdsec_logs/          # Log volume for CrowdSec
+
+🛡️ CrowdSec Notes:
+- AppSec and log parsing is configured
+- Prometheus and API are enabled
+- CAPTCHA and remediation profiles are active
+EOF
+fi
+
+cat >> /host-setup/DEPLOYMENT_INFO.txt << EOF
 
 🔧 Management Commands:
 - View logs: docker compose logs -f
