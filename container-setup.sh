@@ -208,173 +208,151 @@ EOF
 echo "✅ dynamic_config.yml created"
 
 # Set this to true to enable CrowdSec config setup
-ENABLE_CROWDSEC=false
 if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
-  ENABLE_CROWDSEC=true
-fi
+    echo "🛡️  Creating CrowdSec configuration files..."
+    # Configuration - Set these variables
+    DOMAIN="${DOMAIN:-example.com}"
+    ADMIN_SUBDOMAIN="${ADMIN_SUBDOMAIN:-admin}"
+    EMAIL="${EMAIL:-admin@example.com}"
+    ADMIN_PASSWORD="${ADMIN_PASSWORD:-changeme}"
 
-if [ "$ENABLE_CROWDSEC" = "true" ]; then
-    echo "🛡️  Setting up CrowdSec directories and config files..."
+    echo "🛡️ Starting CrowdSec installation..."
 
-    mkdir -p /host-setup/config/crowdsec/notifications
-    mkdir -p /host-setup/config/crowdsec/hub
-    mkdir -p /host-setup/config/crowdsec/patterns
-    mkdir -p /host-setup/config/crowdsec_logs
-    mkdir -p /host-setup/config/traefik/conf
-    mkdir -p /host-setup/config/traefik/logs
+    # Function to create directories
+    create_directories() {
+        echo "📁 Creating directories..."
+        mkdir -p config/crowdsec/db
+        mkdir -p config/crowdsec/acquis.d
+        mkdir -p config/traefik/logs
+        mkdir -p config/traefik/conf
+        mkdir -p config/crowdsec_logs
+        mkdir -p config/letsencrypt
+        
+        # Set proper permissions
+        chmod 600 config/letsencrypt
+    }
 
-    cat > /host-setup/config/crowdsec/acquis.yaml << EOF
-filenames:
- - /var/log/auth.log
- - /var/log/syslog
-labels:
-  type: syslog
----
-poll_without_inotify: false
-filenames:
-  - /var/log/traefik/*.log
-labels:
-  type: traefik
----
-listen_addr: 0.0.0.0:7422 
-appsec_config: crowdsecurity/appsec-default
-name: myAppSecComponent
-source: appsec
-labels:
-  type: appsec
-EOF
+    # Function to create CrowdSec config files
+    create_crowdsec_config() {
+        echo "📝 Creating CrowdSec configuration files..."
+        
+        # Create acquis.yaml (based on your traefik.yaml)
+        cat > config/crowdsec/acquis.yaml << EOF
+    poll_without_inotify: false
+    filenames:
+      - /var/log/traefik/*.log
+    labels:
+      type: traefik
+    ---
+    listen_addr: 0.0.0.0:7422
+    appsec_config: crowdsecurity/appsec-default
+    name: myAppSecComponent
+    source: appsec
+    labels:
+      type: appsec
+    EOF
 
-    cat > /host-setup/config/crowdsec/config.yaml << EOF
-common:
-  daemonize: false
-  log_media: stdout
-  log_level: info
-  log_dir: /var/log/
-config_paths:
-  config_dir: /etc/crowdsec/
-  data_dir: /var/lib/crowdsec/data/
-  simulation_path: /etc/crowdsec/simulation.yaml
-  hub_dir: /etc/crowdsec/hub/
-  index_path: /etc/crowdsec/hub/.index.json
-  notification_dir: /etc/crowdsec/notifications/
-  plugin_dir: /usr/local/lib/crowdsec/plugins/
-crowdsec_service:
-  acquisition_path: /etc/crowdsec/acquis.yaml
-  acquisition_dir: /etc/crowdsec/acquis.d
-  parser_routines: 1
-plugin_config:
-  user: nobody
-  group: nobody
-cscli:
-  output: human
-db_config:
-  log_level: info
-  type: sqlite
-  db_path: /var/lib/crowdsec/data/crowdsec.db
-  flush:
-    max_items: 5000
-    max_age: 7d
-  use_wal: false
-api:
-  client:
-    insecure_skip_verify: false
-    credentials_path: /etc/crowdsec/local_api_credentials.yaml
-  server:
-    log_level: info
-    listen_uri: 0.0.0.0:8080
-    profiles_path: /etc/crowdsec/profiles.yaml
-    trusted_ips:
-      - 127.0.0.1
-      - ::1
-    online_client:
-      credentials_path: /etc/crowdsec/online_api_credentials.yaml
-    enable: true
-prometheus:
-  enabled: true
-  level: full
-  listen_addr: 0.0.0.0
-  listen_port: 6060
-EOF
+        # Create profiles.yaml (from your existing file)
+        cat > config/crowdsec/profiles.yaml << EOF
+    name: captcha_remediation
+    filters:
+      - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() contains "http"
+    decisions:
+      - type: captcha
+        duration: 4h
+    on_success: break
 
-    cat > /host-setup/config/crowdsec/profiles.yaml << EOF
-name: captcha_remediation
-filters:
-  - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() contains "http"
-decisions:
-  - type: captcha
-    duration: 4h
-on_success: break
+    ---
+    name: default_ip_remediation
+    filters:
+    - Alert.Remediation == true && Alert.GetScope() == "Ip"
+    decisions:
+    - type: ban
+      duration: 4h
+    on_success: break
 
----
-name: default_ip_remediation
-filters:
- - Alert.Remediation == true && Alert.GetScope() == "Ip"
-decisions:
- - type: ban
-   duration: 4h
-on_success: break
+    ---
+    name: default_range_remediation
+    filters:
+    - Alert.Remediation == true && Alert.GetScope() == "Range"
+    decisions:
+    - type: ban
+      duration: 4h
+    on_success: break
+    EOF
 
----
-name: default_range_remediation
-filters:
- - Alert.Remediation == true && Alert.GetScope() == "Range"
-decisions:
- - type: ban
-   duration: 4h
-on_success: break
-EOF
+        # Create basic config.yaml
+        cat > config/crowdsec/config.yaml << EOF
+    common:
+      daemonize: false
+      log_media: stdout
+      log_level: info
+    config_paths:
+      config_dir: /etc/crowdsec/
+      data_dir: /var/lib/crowdsec/data/
+      hub_dir: /etc/crowdsec/hub/
+    crowdsec_service:
+      acquisition_path: /etc/crowdsec/acquis.yaml
+    api:
+      server:
+        listen_uri: 0.0.0.0:8080
+        profiles_path: /etc/crowdsec/profiles.yaml
+        trusted_ips:
+          - 127.0.0.1
+          - ::1
+    db_config:
+      type: sqlite
+      db_path: /var/lib/crowdsec/data/crowdsec.db
+    EOF
+    }
 
-    cat > /host-setup/config/crowdsec/user.yaml << EOF
-common:
-  daemonize: false
-  log_media: stdout
-  log_level: info
-  log_dir: /var/log/
-config_paths:
-  config_dir: /etc/crowdsec/
-  data_dir: /var/lib/crowdsec/data
-crowdsec_service:
-  parser_routines: 1
-cscli:
-  output: human
-db_config:
-  type: sqlite
-  db_path: /var/lib/crowdsec/data/crowdsec.db
-  user: crowdsec
-  password: crowdsec
-  db_name: crowdsec
-  host: "127.0.0.1"
-  port: 3306
-api:
-  client:
-    insecure_skip_verify: false
-    credentials_path: /etc/crowdsec/local_api_credentials.yaml
-  server:
-    listen_uri: 127.0.0.1:8080
-    profiles_path: /etc/crowdsec/profiles.yaml
-    online_client:
-      credentials_path: /etc/crowdsec/online_api_credentials.yaml
-prometheus:
-  enabled: true
-  level: full
-EOF
+    # Main installation function
+    install_crowdsec() {
+        echo "🛡️ Installing CrowdSec..."
+        
+        # Create directories
+        create_directories
+        
+        # Create config files
+        create_crowdsec_config
+                
+        echo "✅ CrowdSec installation completed successfully!"
+    }
 
-    cat > /host-setup/config/crowdsec/simulation.yaml << EOF
-simulation: false
-# exclusions:
-#  - crowdsecurity/ssh-bf
-EOF
+    # Check if CrowdSec is already installed
+    check_crowdsec_installed() {
+        if [ -f "docker-compose.yml" ] && grep -q "crowdsec:" docker-compose.yml; then
+            echo "✅ CrowdSec appears to be already installed"
+            return 0
+        else
+            echo "ℹ️ CrowdSec not found in docker-compose.yml"
+            return 1
+        fi
+    }
 
-    cat > /host-setup/config/crowdsec/local_api_credentials.yaml << EOF
-url: http://0.0.0.0:8080
-login: localhost
-password: UNIQUE_PASSWORD_WILL_BE_INSERTED_HERE
-EOF
+    # Main execution
+    main() {
+        echo "🛡️ CrowdSec Installation Script"
+        echo "==============================="
+        
+        # Check if already installed
+        if check_crowdsec_installed; then
+          exit 0
+        fi
+        
+        # Run installation
+        install_crowdsec
+        
+        echo ""
+        echo "🎉 Installation Summary:"
+        echo "- Domain: $DOMAIN"
+        echo "- Admin URL: https://$ADMIN_SUBDOMAIN.$DOMAIN"
+        echo "- CrowdSec logs: docker compose logs crowdsec"
+        echo "- Traefik logs: docker compose logs traefik"
+    }
 
-    touch /host-setup/config/crowdsec/online_api_credentials.yaml
-
-    cd /host-setup/config/traefik/conf
-    wget https://gist.githubusercontent.com/hhftechnology/48569d9f899bb6b889f9de2407efd0d2/raw/captcha.html
+    # Run main function
+    main "$@"
 
     echo "✅ CrowdSec configuration files created"
 fi
