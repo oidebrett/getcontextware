@@ -10,6 +10,7 @@ services:
       - DOMAIN=${DOMAIN:-}
       - EMAIL=${EMAIL:-}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
       - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
@@ -28,6 +29,8 @@ services:
           echo '  DOMAIN - Your domain name (e.g., example.com)'
           echo '  EMAIL - Email for Let'\''s Encrypt certificates'
           echo '  ADMIN_PASSWORD - Admin password for Pangolin (min 8 chars)'
+          echo 'Optional variables:'
+          echo '  ADMIN_SUBDOMAIN - Subdomain for admin portal (default: pangolin)'
           exit 1
         fi
 
@@ -140,8 +143,8 @@ EOF
 
         echo '✅ Setup completed! The stack is ready to start.'
         echo '📊 Start your services with: docker compose up -d'
-        echo '🌐 Access at: https://$$DOMAIN'
-        echo '👤 Admin login: admin@$$DOMAIN'
+        echo '🌐 Access at: https://'"$$ADMIN_SUBDOMAIN"'.'"$$DOMAIN"
+        echo '👤 Admin login: admin@'"$$DOMAIN"
 
         # Keep container running briefly to show completion message
         sleep 5

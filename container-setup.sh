@@ -30,7 +30,7 @@ echo "🔐 Generated secure secret key"
 echo "📝 Creating config.yml..."
 cat > /host-setup/config/config.yml << EOF
 app:
-    dashboard_url: "https://${DOMAIN}"
+    dashboard_url: "https://${ADMIN_SUBDOMAIN}.${DOMAIN}"
     log_level: "info"
     save_logs: false
 
@@ -153,7 +153,7 @@ http:
   routers:
     # HTTP to HTTPS redirect router
     main-app-router-redirect:
-      rule: "Host(\`${DOMAIN}\`)"
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`)"
       service: next-service
       entryPoints:
         - web
@@ -162,7 +162,7 @@ http:
 
     # Next.js router (handles everything except API and WebSocket paths)
     next-router:
-      rule: "Host(\`${DOMAIN}\`) && !PathPrefix(\`/api/v1\`)"
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`) && !PathPrefix(\`/api/v1\`)"
       service: next-service
       entryPoints:
         - websecure
@@ -171,7 +171,7 @@ http:
 
     # API router (handles /api/v1 paths)
     api-router:
-      rule: "Host(\`${DOMAIN}\`) && PathPrefix(\`/api/v1\`)"
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`) && PathPrefix(\`/api/v1\`)"
       service: api-service
       entryPoints:
         - websecure
@@ -180,7 +180,7 @@ http:
 
     # WebSocket router
     ws-router:
-      rule: "Host(\`${DOMAIN}\`)"
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`)"
       service: api-service
       entryPoints:
         - websecure
@@ -209,11 +209,12 @@ Deployment completed at: $(date)
 
 📊 Configuration:
 - Domain: ${DOMAIN}
+- Admin Subdomain: ${ADMIN_SUBDOMAIN}
 - Email: ${EMAIL}
 - Admin User: admin@${DOMAIN}
 
 🌐 Access Information:
-- Dashboard URL: https://${DOMAIN}
+- Dashboard URL: https://${ADMIN_SUBDOMAIN}.${DOMAIN}
 - Admin Login: admin@${DOMAIN}
 - Admin Password: [Set during deployment]
 

@@ -27,7 +27,7 @@ A sleek, containerized deployment of ContextWare - Pangolin with CrowdSec securi
 curl -sSL https://raw.githubusercontent.com/oidebrett/getcontextware/main/docker-compose-setup.yml -o docker-compose-setup.yml
 
 # Run the setup first (only needed once)
-DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up
+DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword ADMIN_SUBDOMAIN=pangolin docker compose -f docker-compose-setup.yml up
 
 # After setup completes, start the services
 docker compose up -d
@@ -52,7 +52,7 @@ git clone https://github.com/oidebrett/getcontextware.git
 cd getcontextware
 
 # Run the setup first (only needed once)
-DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up
+DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword ADMIN_SUBDOMAIN=pangolin docker compose -f docker-compose-setup.yml up
 
 # After setup completes, start the services
 docker compose up -d
