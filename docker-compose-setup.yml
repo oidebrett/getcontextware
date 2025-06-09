@@ -148,40 +148,40 @@ services:
           echo '🛡️ Adding CrowdSec configuration...'
           cat >> /host-setup/docker-compose.yml << EOF
 
-            crowdsec:
-              command: -t
-              container_name: crowdsec
-              environment:
-                ACQUIRE_FILES: /var/log/traefik/*.log
-                COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules crowdsecurity/linux
-                ENROLL_INSTANCE_NAME: pangolin-crowdsec
-                ENROLL_TAGS: docker
-                ENROLL_KEY: "$$CROWDSEC_ENROLLMENT_KEY"
-                GID: "1000"
-                PARSERS: crowdsecurity/whitelists
-              healthcheck:
-                test: [ "CMD", "cscli", "capi", "status" ]
-              image: crowdsecurity/crowdsec:latest
-              depends_on:
-                - gerbil  
-              labels:
-                - traefik.enable=false
-              ports:
-                - 8080:8080
-                - 6060:6060
-              expose:
-                - 8080
-                - 6060
-                - 7422
-              restart: unless-stopped
-              volumes:
-                - ./config/crowdsec:/etc/crowdsec
-                - ./config/crowdsec/db:/var/lib/crowdsec/data
-                - ./config/crowdsec_logs/auth.log:/var/log/auth.log:ro
-                - ./config/crowdsec_logs/syslog:/var/log/syslog:ro
-                - ./config/crowdsec_logs:/var/log
-                - ./config/traefik/logs:/var/log/traefik
-                - ./config/traefik/conf/captcha.html:/etc/traefik/conf/captcha.html
+          crowdsec:
+            command: -t
+            container_name: crowdsec
+            environment:
+              ACQUIRE_FILES: /var/log/traefik/*.log
+              COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules crowdsecurity/linux
+              ENROLL_INSTANCE_NAME: pangolin-crowdsec
+              ENROLL_TAGS: docker
+              ENROLL_KEY: "$$CROWDSEC_ENROLLMENT_KEY"
+              GID: "1000"
+              PARSERS: crowdsecurity/whitelists
+            healthcheck:
+              test: [ "CMD", "cscli", "capi", "status" ]
+            image: crowdsecurity/crowdsec:latest
+            depends_on:
+              - gerbil  
+            labels:
+              - traefik.enable=false
+            ports:
+              - 8080:8080
+              - 6060:6060
+            expose:
+              - 8080
+              - 6060
+              - 7422
+            restart: unless-stopped
+            volumes:
+              - ./config/crowdsec:/etc/crowdsec
+              - ./config/crowdsec/db:/var/lib/crowdsec/data
+              - ./config/crowdsec_logs/auth.log:/var/log/auth.log:ro
+              - ./config/crowdsec_logs/syslog:/var/log/syslog:ro
+              - ./config/crowdsec_logs:/var/log
+              - ./config/traefik/logs:/var/log/traefik
+              - ./config/traefik/conf/captcha.html:/etc/traefik/conf/captcha.html
       EOF
 
         fi
@@ -189,10 +189,10 @@ services:
         # Append network block (always)
         cat >> /host-setup/docker-compose.yml << EOF
 
-          networks:
-            default:
-              external: true
-              name: pangolin
+        networks:
+          default:
+            external: true
+            name: pangolin
       EOF
       
         echo '✅ Setup completed! The stack is ready to start.'
