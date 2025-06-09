@@ -158,7 +158,6 @@ services:
               PARSERS: crowdsecurity/whitelists
               ENROLL_TAGS: docker
               ENROLL_KEY: "$$CROWDSEC_ENROLLMENT_KEY"
-              GID: "1000"
             healthcheck:
               interval: 10s
               retries: 15
