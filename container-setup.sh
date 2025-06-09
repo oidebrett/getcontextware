@@ -370,6 +370,9 @@ EOF
 
     touch /host-setup/config/crowdsec/online_api_credentials.yaml
 
+    cd /host-setup/config/traefik/conf
+    wget https://gist.githubusercontent.com/hhftechnology/48569d9f899bb6b889f9de2407efd0d2/raw/captcha.html
+
     echo "✅ CrowdSec configuration files created"
 fi
 

@@ -135,6 +135,46 @@ services:
               - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
               - ./config/letsencrypt:/letsencrypt # Volume to store the Lets Encrypt certificates
 
+          # Add CrowdSec services
+          crowdsec:
+            command: -t
+            container_name: crowdsec
+            environment:
+              ACQUIRE_FILES: /var/log/traefik/*.log
+              COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules
+              ENROLL_INSTANCE_NAME: pangolin-crowdsec
+              ENROLL_TAGS: docker
+              ENROLL_KEY: INSERT-ENROLLMENT-KEY-HERE
+              GID: "1000"
+              PARSERS: crowdsecurity/whitelists
+            healthcheck:
+              test:
+                - CMD
+                - cscli
+                - capi
+                - status
+            image: crowdsecurity/crowdsec:latest
+            depends_on:
+              - gerbil  
+            labels:
+              - traefik.enable=false
+            ports:
+              - 8080:8080
+              - 6060:6060
+            expose:
+              - 8080
+              - 6060
+              - 7422
+            restart: unless-stopped
+            volumes:
+              - ./config/crowdsec:/etc/crowdsec
+              - ./config/crowdsec/db:/var/lib/crowdsec/data
+              - ./config/crowdsec_logs/auth.log:/var/log/auth.log:ro
+              - ./config/crowdsec_logs/syslog:/var/log/syslog:ro
+              - ./config/crowdsec_logs:/var/log
+              - ./config/traefik/logs:/var/log/traefik
+              - ./config/traefik/conf/captcha.html:/etc/traefik/conf/captcha.html
+
         networks:
           default:
             external: true
