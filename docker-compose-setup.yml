@@ -18,11 +18,11 @@ services:
     command: |
       sh -c "
         # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
-        ENABLE_CROWDSEC="false"
-        if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
+        ENABLE_CROWDSEC=false
+        if [ -n \"$CROWDSEC_ENROLLMENT_KEY\" ]; then
           echo 'Crowdsec Selected for setup ...'
-          ENABLE_CROWDSEC="true"
-        fi
+          ENABLE_CROWDSEC=true
+        fi        
         echo '🚀 Starting Pangolin setup container...'
 
         # Install required tools
@@ -143,8 +143,8 @@ services:
               - ./config/letsencrypt:/letsencrypt # Volume to store the Lets Encrypt certificates
       EOF
 
-        # Part 2: Conditionally append CrowdSec if ENABLE_CROWDSEC="true"
-        if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
+        # Part 2: Conditionally append CrowdSec if CROWDSEC_ENROLLMENT_KEY is set
+        if [ -n \"$CROWDSEC_ENROLLMENT_KEY\" ]; then
           echo '🛡️ Adding CrowdSec configuration...'
           cat >> /host-setup/docker-compose.yml << EOF
 
