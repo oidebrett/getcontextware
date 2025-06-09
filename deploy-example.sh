@@ -19,18 +19,23 @@ echo "   Email: $EMAIL"
 echo "   Admin Password: [HIDDEN]"
 echo
 
-# Validate that docker-compose.yml exists
-if [ ! -f "docker-compose.yml" ]; then
-    echo "❌ docker-compose.yml not found!"
+# Validate that docker-compose-setup.yml exists
+if [ ! -f "docker-compose-setup.yml" ]; then
+    echo "❌ docker-compose-setup.yml not found!"
     echo "   Download it first:"
-    echo "   curl -sSL https://raw.githubusercontent.com/yourusername/pangolin-crowdsec-stack/main/docker-compose.yml -o docker-compose.yml"
+    echo "   curl -sSL https://raw.githubusercontent.com/yourusername/pangolin-crowdsec-stack/main/docker-compose-setup.yml -o docker-compose-setup.yml"
     exit 1
 fi
 
-echo "🐳 Starting deployment..."
+echo "🔧 Running setup first..."
 
-# Deploy with environment variables
-DOMAIN="$DOMAIN" EMAIL="$EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" docker compose up -d
+# Run setup with environment variables
+DOMAIN="$DOMAIN" EMAIL="$EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" docker compose -f docker-compose-setup.yml up
+
+echo "🚀 Starting services..."
+
+# Start services
+docker compose up -d
 
 echo
 echo "✅ Deployment started!"

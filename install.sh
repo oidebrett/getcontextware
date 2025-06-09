@@ -107,16 +107,16 @@ print_status "Creating installation directory: $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 
-# Download docker-compose.yml
-print_status "Downloading docker-compose.yml from GitHub..."
-if ! curl -fsSL "${BASE_URL}/docker-compose.yml" -o docker-compose.yml; then
-    print_error "Failed to download docker-compose.yml"
+# Download docker-compose-setup.yml
+print_status "Downloading docker-compose-setup.yml from GitHub..."
+if ! curl -fsSL "${BASE_URL}/docker-compose-setup.yml" -o docker-compose-setup.yml; then
+    print_error "Failed to download docker-compose-setup.yml"
     print_error "Make sure the repository exists and is accessible:"
-    echo "  ${BASE_URL}/docker-compose.yml"
+    echo "  ${BASE_URL}/docker-compose-setup.yml"
     exit 1
 fi
 
-print_success "docker-compose.yml downloaded successfully"
+print_success "docker-compose-setup.yml downloaded successfully"
 
 # Provide deployment instructions
 echo
@@ -129,11 +129,14 @@ echo "   export DOMAIN=your-domain.com"
 echo "   export EMAIL=your-email@example.com"
 echo "   export ADMIN_PASSWORD=your-secure-password"
 echo
-echo "2. Deploy the stack:"
+echo "2. Run the setup first (only needed once):"
+echo "   docker compose -f docker-compose-setup.yml up"
+echo
+echo "3. After setup completes, start the services:"
 echo "   docker compose up -d"
 echo
-echo "Or in one command:"
-echo "   DOMAIN=your-domain.com EMAIL=your-email@example.com ADMIN_PASSWORD=your-password docker compose up -d"
+echo "Or run setup in one command:"
+echo "   DOMAIN=your-domain.com EMAIL=your-email@example.com ADMIN_PASSWORD=your-password docker compose -f docker-compose-setup.yml up"
 echo
 print_warning "⚠️  Important:"
 echo "   • Make sure your domain points to this server's IP"
