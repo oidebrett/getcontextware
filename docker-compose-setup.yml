@@ -14,8 +14,15 @@ services:
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
       - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
+      - CROWDSEC_ENROLLMENT_KEY=${CROWDSEC_ENROLLMENT_KEY:-}
     command: |
       sh -c "
+        # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
+        ENABLE_CROWDSEC=false
+        if [ ! -z "$$CROWDSEC_ENROLLMENT_KEY" ]; then
+          ENABLE_CROWDSEC=true
+        fi
+
         echo '🚀 Starting Pangolin setup container...'
 
         # Install required tools
@@ -134,25 +141,26 @@ services:
             volumes:
               - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
               - ./config/letsencrypt:/letsencrypt # Volume to store the Lets Encrypt certificates
+      EOF
 
-          # Add CrowdSec services
+        # Part 2: Conditionally append CrowdSec if ENABLE_CROWDSEC=true
+        if [ "$ENABLE_CROWDSEC" = "true" ]; then
+          echo '🛡️ Adding CrowdSec configuration...'
+          cat >> /host-setup/docker-compose.yml << EOF
+
           crowdsec:
             command: -t
             container_name: crowdsec
             environment:
               ACQUIRE_FILES: /var/log/traefik/*.log
-              COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules
+              COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules crowdsecurity/linux
               ENROLL_INSTANCE_NAME: pangolin-crowdsec
               ENROLL_TAGS: docker
-              ENROLL_KEY: INSERT-ENROLLMENT-KEY-HERE
+              ENROLL_KEY: ${CROWDSEC_ENROLLMENT_KEY}
               GID: "1000"
               PARSERS: crowdsecurity/whitelists
             healthcheck:
-              test:
-                - CMD
-                - cscli
-                - capi
-                - status
+              test: [ "CMD", "cscli", "capi", "status" ]
             image: crowdsecurity/crowdsec:latest
             depends_on:
               - gerbil  
@@ -174,6 +182,11 @@ services:
               - ./config/crowdsec_logs:/var/log
               - ./config/traefik/logs:/var/log/traefik
               - ./config/traefik/conf/captcha.html:/etc/traefik/conf/captcha.html
+      EOF
+        fi
+
+      # Append network block (always)
+      cat >> /host-setup/docker-compose.yml << EOF
 
         networks:
           default:

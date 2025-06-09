@@ -29,6 +29,15 @@ curl -sSL https://raw.githubusercontent.com/oidebrett/getcontextware/main/docker
 # Run the setup first (only needed once)
 DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword ADMIN_SUBDOMAIN=pangolin docker compose -f docker-compose-setup.yml up
 
+# Or run the setup (only if you need CROWDSEC)
+
+DOMAIN=example.com \
+EMAIL=admin@example.com \
+ADMIN_PASSWORD=mypassword \
+ADMIN_SUBDOMAIN=pangolin \
+CROWDSEC_ENROLLMENT_KEY=your-key-here \
+docker compose -f docker-compose-setup.yml up
+
 # After setup completes, start the services
 docker compose up -d
 ```
