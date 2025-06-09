@@ -12,6 +12,173 @@ generate_secret() {
     openssl rand -base64 32 | tr -d "=+/" | cut -c1-32
 }
 
+# Function to create directories for CrowdSec
+create_crowdsec_directories() {
+    echo "📁 Creating CrowdSec directories..."
+    mkdir -p /host-setup/config/crowdsec/db
+    mkdir -p /host-setup/config/crowdsec/acquis.d
+    mkdir -p /host-setup/config/traefik/logs
+    mkdir -p /host-setup/config/traefik/conf
+    mkdir -p /host-setup/config/crowdsec_logs
+}
+
+# Function to create CrowdSec config files
+create_crowdsec_config() {
+    echo "📝 Creating CrowdSec configuration files..."
+    
+    # Create acquis.yaml
+    cat > /host-setup/config/crowdsec/acquis.yaml << 'EOF'
+poll_without_inotify: false
+filenames:
+  - /var/log/traefik/*.log
+labels:
+  type: traefik
+---
+listen_addr: 0.0.0.0:7422
+appsec_config: crowdsecurity/appsec-default
+name: myAppSecComponent
+source: appsec
+labels:
+  type: appsec
+EOF
+
+    # Create profiles.yaml
+    cat > /host-setup/config/crowdsec/profiles.yaml << 'EOF'
+name: captcha_remediation
+filters:
+  - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() contains "http"
+decisions:
+  - type: captcha
+    duration: 4h
+on_success: break
+
+---
+name: default_ip_remediation
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Ip"
+decisions:
+ - type: ban
+   duration: 4h
+on_success: break
+
+---
+name: default_range_remediation
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Range"
+decisions:
+ - type: ban
+   duration: 4h
+on_success: break
+EOF
+
+
+# Function to update dynamic config with CrowdSec middleware
+update_dynamic_config_with_crowdsec() {
+    echo "📝 Updating dynamic config with CrowdSec middleware..."
+    
+    cat > /host-setup/config/traefik/rules/dynamic_config.yml << EOF
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+    default-whitelist:
+      ipWhiteList:
+        sourceRange:
+        - "10.0.0.0/8"
+        - "192.168.0.0/16"
+        - "172.16.0.0/12"
+    security-headers:
+      headers:
+        customResponseHeaders:
+          Server: ""
+          X-Powered-By: ""
+          X-Forwarded-Proto: "https"
+        contentTypeNosniff: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        referrerPolicy: "strict-origin-when-cross-origin"
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsSeconds: 63072000
+        stsPreload: true
+    crowdsec:
+      plugin:
+        crowdsec:
+          enabled: true
+          logLevel: INFO
+          updateIntervalSeconds: 15
+          crowdsecMode: live
+          crowdsecAppsecEnabled: true
+          crowdsecAppsecHost: crowdsec:7422
+          crowdsecLapiKey: "PUT_YOUR_BOUNCER_KEY_HERE_OR_IT_WILL_NOT_WORK"
+          crowdsecLapiHost: crowdsec:8080
+          crowdsecLapiScheme: http
+          forwardedHeadersTrustedIPs:
+            - "0.0.0.0/0"
+          clientTrustedIPs:
+            - "10.0.0.0/8"
+            - "172.16.0.0/12"
+            - "192.168.0.0/16"
+
+  routers:
+    # HTTP to HTTPS redirect router
+    main-app-router-redirect:
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`)"
+      service: next-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+
+    # Next.js router (handles everything except API and WebSocket paths)
+    next-router:
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`) && !PathPrefix(\`/api/v1\`)"
+      service: next-service
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - crowdsec
+      tls:
+        certResolver: letsencrypt
+
+    # API router (handles /api/v1 paths)
+    api-router:
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`) && PathPrefix(\`/api/v1\`)"
+      service: api-service
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - crowdsec
+      tls:
+        certResolver: letsencrypt
+
+    # WebSocket router
+    ws-router:
+      rule: "Host(\`${ADMIN_SUBDOMAIN}.${DOMAIN}\`)"
+      service: api-service
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - crowdsec
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    next-service:
+      loadBalancer:
+        servers:
+          - url: "http://pangolin:3002" # Next.js server
+
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://pangolin:3000" # API/WebSocket server
+EOF
+}
+
 # Create directory structure on host
 echo "📁 Creating directory structure..."
 mkdir -p /host-setup/config/traefik
@@ -147,9 +314,27 @@ EOF
 
 echo "✅ traefik_config.yml created"
 
-# Create dynamic_config.yml
-echo "📝 Creating dynamic_config.yml..."
-cat > /host-setup/config/traefik/rules/dynamic_config.yml << EOF
+# Check if CrowdSec should be enabled
+if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
+    echo "🛡️ CrowdSec enrollment key detected - setting up CrowdSec..."
+    ENABLE_CROWDSEC=true
+    
+    # Create CrowdSec directories
+    create_crowdsec_directories
+    
+    # Create CrowdSec config files
+    create_crowdsec_config
+    
+    # Update dynamic config with CrowdSec middleware
+    update_dynamic_config_with_crowdsec
+    
+    echo "✅ CrowdSec configuration files created"
+else
+    echo "ℹ️ No CrowdSec enrollment key - creating basic dynamic config..."
+    ENABLE_CROWDSEC=false
+    
+    # Create basic dynamic_config.yml without CrowdSec
+    cat > /host-setup/config/traefik/rules/dynamic_config.yml << EOF
 http:
   middlewares:
     redirect-to-https:
@@ -204,158 +389,9 @@ http:
         servers:
           - url: "http://pangolin:3000" # API/WebSocket server
 EOF
+fi
 
 echo "✅ dynamic_config.yml created"
-
-# Set this to true to enable CrowdSec config setup
-if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
-    echo "🛡️  Creating CrowdSec configuration files..."
-    # Configuration - Set these variables
-    DOMAIN="${DOMAIN:-example.com}"
-    ADMIN_SUBDOMAIN="${ADMIN_SUBDOMAIN:-admin}"
-    EMAIL="${EMAIL:-admin@example.com}"
-    ADMIN_PASSWORD="${ADMIN_PASSWORD:-changeme}"
-
-    echo "🛡️ Starting CrowdSec installation..."
-
-    # Function to create directories
-    create_directories() {
-        echo "📁 Creating directories..."
-        mkdir -p config/crowdsec/db
-        mkdir -p config/crowdsec/acquis.d
-        mkdir -p config/traefik/logs
-        mkdir -p config/traefik/conf
-        mkdir -p config/crowdsec_logs
-        mkdir -p config/letsencrypt
-        
-        # Set proper permissions
-        chmod 600 config/letsencrypt
-    }
-
-    # Function to create CrowdSec config files
-    create_crowdsec_config() {
-        echo "📝 Creating CrowdSec configuration files..."
-        
-        # Create acquis.yaml (based on your traefik.yaml)
-        cat > config/crowdsec/acquis.yaml << EOF
-    poll_without_inotify: false
-    filenames:
-      - /var/log/traefik/*.log
-    labels:
-      type: traefik
-    ---
-    listen_addr: 0.0.0.0:7422
-    appsec_config: crowdsecurity/appsec-default
-    name: myAppSecComponent
-    source: appsec
-    labels:
-      type: appsec
-    EOF
-
-        # Create profiles.yaml (from your existing file)
-        cat > config/crowdsec/profiles.yaml << EOF
-    name: captcha_remediation
-    filters:
-      - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() contains "http"
-    decisions:
-      - type: captcha
-        duration: 4h
-    on_success: break
-
-    ---
-    name: default_ip_remediation
-    filters:
-    - Alert.Remediation == true && Alert.GetScope() == "Ip"
-    decisions:
-    - type: ban
-      duration: 4h
-    on_success: break
-
-    ---
-    name: default_range_remediation
-    filters:
-    - Alert.Remediation == true && Alert.GetScope() == "Range"
-    decisions:
-    - type: ban
-      duration: 4h
-    on_success: break
-    EOF
-
-        # Create basic config.yaml
-        cat > config/crowdsec/config.yaml << EOF
-    common:
-      daemonize: false
-      log_media: stdout
-      log_level: info
-    config_paths:
-      config_dir: /etc/crowdsec/
-      data_dir: /var/lib/crowdsec/data/
-      hub_dir: /etc/crowdsec/hub/
-    crowdsec_service:
-      acquisition_path: /etc/crowdsec/acquis.yaml
-    api:
-      server:
-        listen_uri: 0.0.0.0:8080
-        profiles_path: /etc/crowdsec/profiles.yaml
-        trusted_ips:
-          - 127.0.0.1
-          - ::1
-    db_config:
-      type: sqlite
-      db_path: /var/lib/crowdsec/data/crowdsec.db
-    EOF
-    }
-
-    # Main installation function
-    install_crowdsec() {
-        echo "🛡️ Installing CrowdSec..."
-        
-        # Create directories
-        create_directories
-        
-        # Create config files
-        create_crowdsec_config
-                
-        echo "✅ CrowdSec installation completed successfully!"
-    }
-
-    # Check if CrowdSec is already installed
-    check_crowdsec_installed() {
-        if [ -f "docker-compose.yml" ] && grep -q "crowdsec:" docker-compose.yml; then
-            echo "✅ CrowdSec appears to be already installed"
-            return 0
-        else
-            echo "ℹ️ CrowdSec not found in docker-compose.yml"
-            return 1
-        fi
-    }
-
-    # Main execution
-    main() {
-        echo "🛡️ CrowdSec Installation Script"
-        echo "==============================="
-        
-        # Check if already installed
-        if check_crowdsec_installed; then
-          exit 0
-        fi
-        
-        # Run installation
-        install_crowdsec
-        
-        echo ""
-        echo "🎉 Installation Summary:"
-        echo "- Domain: $DOMAIN"
-        echo "- Admin URL: https://$ADMIN_SUBDOMAIN.$DOMAIN"
-        echo "- CrowdSec logs: docker compose logs crowdsec"
-        echo "- Traefik logs: docker compose logs traefik"
-    }
-
-    # Run main function
-    main "$@"
-
-    echo "✅ CrowdSec configuration files created"
-fi
 
 # Create a summary file for the user
 cat > /host-setup/DEPLOYMENT_INFO.txt << EOF
@@ -387,16 +423,12 @@ Deployment completed at: $(date)
 
 EOF
 
-if [ "$ENABLE_CROWDSEC" = true ]; then
+if [ "$ENABLE_CROWDSEC" = "true" ]; then
 cat >> /host-setup/DEPLOYMENT_INFO.txt << EOF
 └── crowdsec/
     ├── acquis.yaml
     ├── config.yaml
-    ├── profiles.yaml
-    ├── user.yaml
-    ├── simulation.yaml
-    ├── local_api_credentials.yaml
-    └── online_api_credentials.yaml
+    └── profiles.yaml
 📁 Additional:
 ./crowdsec_logs/          # Log volume for CrowdSec
 
@@ -404,6 +436,8 @@ cat >> /host-setup/DEPLOYMENT_INFO.txt << EOF
 - AppSec and log parsing is configured
 - Prometheus and API are enabled
 - CAPTCHA and remediation profiles are active
+- Remember to get the bouncer API key after containers start:
+  docker exec crowdsec cscli bouncers add traefik-bouncer
 EOF
 fi
 
@@ -430,3 +464,19 @@ EOF
 
 echo "✅ All configuration files created successfully!"
 echo "📋 Deployment info saved to DEPLOYMENT_INFO.txt"
+
+# Final summary
+echo ""
+echo "🎉 Setup Complete!"
+echo "================================"
+if [ "$ENABLE_CROWDSEC" = "true" ]; then
+    echo "✅ CrowdSec configuration included"
+    echo "⚠️  Remember to:"
+    echo "   1. Start your containers: docker compose up -d"
+    echo "   2. Get bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer"
+    echo "   3. Update dynamic_config.yml with the bouncer key"
+    echo "   4. Restart traefik: docker compose restart traefik"
+else
+    echo "ℹ️  Basic Traefik configuration (no CrowdSec)"
+    echo "💡 To add CrowdSec later, set CROWDSEC_ENROLLMENT_KEY and re-run"
+fi
