@@ -156,7 +156,7 @@ services:
               COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules crowdsecurity/linux
               ENROLL_INSTANCE_NAME: pangolin-crowdsec
               ENROLL_TAGS: docker
-              ENROLL_KEY: ${CROWDSEC_ENROLLMENT_KEY}
+              ENROLL_KEY: "$$CROWDSEC_ENROLLMENT_KEY"
               GID: "1000"
               PARSERS: crowdsecurity/whitelists
             healthcheck:
