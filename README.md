@@ -59,6 +59,12 @@ The deployment requires three environment variables:
 - **EMAIL** - Email address for Let's Encrypt certificates
 - **ADMIN_PASSWORD** - Admin password for Pangolin (minimum 8 characters)
 
+You may see an error: Invalid configuration file: Validation error: Your password must meet the following conditions:
+at least one uppercase English letter,
+at least one lowercase English letter,
+at least one digit,
+at least one special character. at "users.server_admin.password"
+
 ### Optional Variables
 
 - **GITHUB_USER** - GitHub username (default: `oidebrett`)
