@@ -10,8 +10,8 @@ services:
       - DOMAIN=${DOMAIN:-}
       - EMAIL=${EMAIL:-}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
-      - GITHUB_USER=${GITHUB_USER:-yourusername}
-      - GITHUB_REPO=${GITHUB_REPO:-pangolin-crowdsec-stack}
+      - GITHUB_USER=${GITHUB_USER:-oidebrett}
+      - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
     command: |
       sh -c "
@@ -20,16 +20,20 @@ services:
         # Install required tools
         apk add --no-cache curl docker-cli openssl
 
+        echo 'Validating required environment variables...'
+
         # Validate required environment variables
-        if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
+        if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ] || [ -z "$ADMIN_PASSWORD"]; then
           echo '❌ Error: Required environment variables not set!'
           echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose up'
           echo 'Required variables:'
           echo '  DOMAIN - Your domain name (e.g., example.com)'
-          echo '  EMAIL - Email for Let'\''s Encrypt certificates'
+          echo '  EMAIL - Email for LetsEncrypt certificates'
           echo '  ADMIN_PASSWORD - Admin password for Pangolin (min 8 chars)'
           exit 1
         fi
+
+        echo 'Validating domain format...'
 
         # Validate domain format
         if ! echo \"$$DOMAIN\" | grep -E '^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\\.[a-zA-Z]{2,}$$' > /dev/null; then
@@ -131,7 +135,7 @@ services:
       - --configFile=/etc/traefik/traefik_config.yml
     volumes:
       - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
-      - ./config/letsencrypt:/letsencrypt # Volume to store the Let's Encrypt certificates
+      - ./config/letsencrypt:/letsencrypt # Volume to store the Lets Encrypt certificates
 
 networks:
   default:
