@@ -70,7 +70,7 @@ decisions:
    duration: 4h
 on_success: break
 EOF
-
+}
 
 # Function to update dynamic config with CrowdSec middleware
 update_dynamic_config_with_crowdsec() {
@@ -423,7 +423,7 @@ Deployment completed at: $(date)
 
 EOF
 
-if [ "$ENABLE_CROWDSEC" = "true" ]; then
+if [ -n \"$CROWDSEC_ENROLLMENT_KEY\" ]; then
 cat >> /host-setup/DEPLOYMENT_INFO.txt << EOF
 └── crowdsec/
     ├── acquis.yaml
@@ -469,7 +469,7 @@ echo "📋 Deployment info saved to DEPLOYMENT_INFO.txt"
 echo ""
 echo "🎉 Setup Complete!"
 echo "================================"
-if [ "$ENABLE_CROWDSEC" = "true" ]; then
+if [ -n \"$CROWDSEC_ENROLLMENT_KEY\" ]; then
     echo "✅ CrowdSec configuration included"
     echo "⚠️  Remember to:"
     echo "   1. Start your containers: docker compose up -d"
