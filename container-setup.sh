@@ -15,6 +15,7 @@ generate_secret() {
 # Create directory structure on host
 echo "📁 Creating directory structure..."
 mkdir -p /host-setup/config/traefik
+mkdir -p /host-setup/config/traefik/rules
 mkdir -p /host-setup/config/letsencrypt
 
 # Set proper permissions for Let's Encrypt directory
@@ -102,7 +103,8 @@ providers:
     endpoint: "http://pangolin:3001/api/v1/traefik-config"
     pollInterval: "5s"
   file:
-    filename: "/etc/traefik/dynamic_config.yml"
+    directory: "/rules"
+    watch: true
 
 experimental:
   plugins:
@@ -143,7 +145,7 @@ echo "✅ traefik_config.yml created"
 
 # Create dynamic_config.yml
 echo "📝 Creating dynamic_config.yml..."
-cat > /host-setup/config/traefik/dynamic_config.yml << EOF
+cat > /host-setup/config/traefik/rules/dynamic_config.yml << EOF
 http:
   middlewares:
     redirect-to-https:
@@ -223,8 +225,9 @@ Deployment completed at: $(date)
 ├── config.yml
 ├── letsencrypt/          # Let's Encrypt certificates
 └── traefik/
-    ├── traefik_config.yml
-    └── dynamic_config.yml
+    └── rules/
+        └── dynamic_config.yml
+    └── traefik_config.yml
 
 🔧 Management Commands:
 - View logs: docker compose logs -f
