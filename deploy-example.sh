@@ -30,13 +30,13 @@ fi
 echo "🐳 Starting deployment..."
 
 # Deploy with environment variables
-DOMAIN="$DOMAIN" EMAIL="$EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" docker-compose up -d
+DOMAIN="$DOMAIN" EMAIL="$EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" docker compose up -d
 
 echo
 echo "✅ Deployment started!"
 echo
 echo "📊 Monitor the deployment:"
-echo "   docker-compose logs -f"
+echo "   docker compose logs -f"
 echo
 echo "🌐 Once ready, access your dashboard at:"
 echo "   https://$DOMAIN"

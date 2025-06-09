@@ -27,7 +27,7 @@ A sleek, containerized deployment of ContextWare - Pangolin with CrowdSec securi
 curl -sSL https://raw.githubusercontent.com/oidebrett/getcontextware/main/docker-compose.yml -o docker-compose.yml
 
 # Deploy with your configuration
-DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker-compose up -d
+DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose up -d
 ```
 
 ### What happens during deployment:
@@ -48,7 +48,7 @@ git clone https://github.com/oidebrett/getcontextware.git
 cd getcontextware
 
 # Deploy with your configuration
-DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker-compose up -d
+DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose up -d
 ```
 
 ## Environment Variables
@@ -92,20 +92,20 @@ After deployment, you'll have:
 
 ```bash
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Restart services
-docker-compose restart
+docker compose restart
 
 # Stop services
-docker-compose down
+docker compose down
 
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # Update images
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ## Configuration
@@ -134,7 +134,7 @@ After successful deployment:
 
 2. **Certificate issues**
    - Let's Encrypt certificates can take a few minutes to issue
-   - Check logs: `docker-compose logs traefik`
+   - Check logs: `docker compose logs traefik`
 
 3. **Permission errors**
    - Ensure your user is in the docker group: `sudo usermod -aG docker $USER`
@@ -144,12 +144,12 @@ After successful deployment:
 
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f pangolin
-docker-compose logs -f traefik
-docker-compose logs -f gerbil
+docker compose logs -f pangolin
+docker compose logs -f traefik
+docker compose logs -f gerbil
 ```
 
 ## Security Notes
@@ -162,7 +162,7 @@ docker-compose logs -f gerbil
 ## Support
 
 For issues and questions:
-- Check the logs first: `docker-compose logs -f`
+- Check the logs first: `docker compose logs -f`
 - Ensure your domain DNS is properly configured
 - Verify all ports (80, 443, 51820) are accessible
 

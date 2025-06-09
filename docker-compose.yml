@@ -18,12 +18,12 @@ services:
         echo '🚀 Starting Pangolin setup container...'
 
         # Install required tools
-        apk add --no-cache curl docker-cli docker-compose openssl
+        apk add --no-cache curl docker-cli openssl
 
         # Validate required environment variables
         if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
           echo '❌ Error: Required environment variables not set!'
-          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker-compose up'
+          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose up'
           echo 'Required variables:'
           echo '  DOMAIN - Your domain name (e.g., example.com)'
           echo '  EMAIL - Email for Let'\''s Encrypt certificates'
@@ -70,7 +70,7 @@ services:
         /container-setup.sh
 
         echo '✅ Setup completed! The stack will now start...'
-        echo '📊 Monitor with: docker-compose logs -f'
+        echo '📊 Monitor with: docker compose logs -f'
         echo '🌐 Access at: https://$$DOMAIN'
         echo '👤 Admin login: admin@$$DOMAIN'
 

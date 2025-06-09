@@ -45,15 +45,40 @@ fi
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
-    print_error "Docker is not installed. Please install Docker first:"
-    echo "  curl -fsSL https://get.docker.com | sh"
-    echo "  sudo usermod -aG docker \$USER"
-    echo "  # Log out and back in, then run this script again"
-    exit 1
+    print_error "Docker is not installed. Installing Docker now..."
+    
+    echo "Proceeding with Docker installation at $(date)"
+    
+    # Update package lists
+    apt-get update
+    
+    # Install prerequisites
+    apt-get install -y ca-certificates curl gnupg
+    
+    # Set up Docker repository
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    
+    # Add Docker repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Update package lists again with Docker repository
+    apt-get update
+    
+    # Install Docker
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
+    # Add the default user to the docker group
+    usermod -aG docker ubuntu
+    
+    print_warning "Docker installed. You may need to log out and back in for group changes to take effect."
+    print_warning "After logging back in, run this script again."
+    exit 0
 fi
 
 # Check if Docker Compose is available
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     print_error "Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
@@ -105,10 +130,10 @@ echo "   export EMAIL=your-email@example.com"
 echo "   export ADMIN_PASSWORD=your-secure-password"
 echo
 echo "2. Deploy the stack:"
-echo "   docker-compose up -d"
+echo "   docker compose up -d"
 echo
 echo "Or in one command:"
-echo "   DOMAIN=your-domain.com EMAIL=your-email@example.com ADMIN_PASSWORD=your-password docker-compose up -d"
+echo "   DOMAIN=your-domain.com EMAIL=your-email@example.com ADMIN_PASSWORD=your-password docker compose up -d"
 echo
 print_warning "⚠️  Important:"
 echo "   • Make sure your domain points to this server's IP"
@@ -116,6 +141,6 @@ echo "   • Password must be at least 8 characters"
 echo "   • Ports 80, 443, and 51820 must be available"
 echo
 print_status "📊 After deployment:"
-echo "   • View logs: docker-compose logs -f"
+echo "   • View logs: docker compose logs -f"
 echo "   • Access dashboard: https://your-domain.com"
 echo "   • Admin login: admin@your-domain.com"

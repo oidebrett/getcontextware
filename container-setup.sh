@@ -226,10 +226,10 @@ Deployment completed at: $(date)
     └── dynamic_config.yml
 
 🔧 Management Commands:
-- View logs: docker-compose logs -f
-- Restart: docker-compose restart
-- Stop: docker-compose down
-- Update: docker-compose pull && docker-compose up -d
+- View logs: docker compose logs -f
+- Restart: docker compose restart
+- Stop: docker compose down
+- Update: docker compose pull && docker compose up -d
 
 ⚠️  Important Notes:
 - Ensure ${DOMAIN} DNS points to this server's IP
