@@ -44,7 +44,7 @@ services:
         fi
 
         # Validate password length
-        if [ $${#ADMIN_PASSWORD} -lt 8 ]; then
+        if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
           echo '❌ Error: Password must be at least 8 characters long'
           exit 1
         fi
