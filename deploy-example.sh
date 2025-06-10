@@ -11,11 +11,13 @@ echo
 # Example configuration - REPLACE THESE WITH YOUR ACTUAL VALUES
 DOMAIN="example.com"
 EMAIL="admin@example.com"
+ADMIN_USERNAME="admin@example.com"
 ADMIN_PASSWORD="MySecurePassword123"
 
 echo "📋 Configuration:"
 echo "   Domain: $DOMAIN"
 echo "   Email: $EMAIL"
+echo "   Admin Username: $ADMIN_USERNAME"
 echo "   Admin Password: [HIDDEN]"
 echo
 
@@ -30,7 +32,7 @@ fi
 echo "🔧 Running setup first..."
 
 # Run setup with environment variables
-DOMAIN="$DOMAIN" EMAIL="$EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" docker compose -f docker-compose-setup.yml up
+DOMAIN="$DOMAIN" EMAIL="$EMAIL" ADMIN_SUBDOMAIN="pangolin" ADMIN_USERNAME="$ADMIN_USERNAME" ADMIN_PASSWORD="$ADMIN_PASSWORD" docker compose -f docker-compose-setup.yml up
 
 echo "🚀 Starting services..."
 

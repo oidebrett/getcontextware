@@ -245,7 +245,7 @@ rate_limits:
 
 users:
     server_admin:
-        email: "admin@${DOMAIN}"
+        email: "${ADMIN_USERNAME}"
         password: "${ADMIN_PASSWORD}"
 
 flags:
@@ -407,7 +407,7 @@ Deployment completed at: $(date)
 
 🌐 Access Information:
 - Dashboard URL: https://${ADMIN_SUBDOMAIN}.${DOMAIN}
-- Admin Login: admin@${DOMAIN}
+- Admin Login: ${ADMIN_USERNAME}
 - Admin Password: [Set during deployment]
 
 📁 Directory Structure Created:

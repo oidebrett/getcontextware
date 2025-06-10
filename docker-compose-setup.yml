@@ -9,6 +9,7 @@ services:
     environment:
       - DOMAIN=${DOMAIN:-}
       - EMAIL=${EMAIL:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
@@ -29,12 +30,13 @@ services:
         apk add --no-cache curl docker-cli openssl
 
         # Validate required environment variables
-        if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
+        if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_USERNAME\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
           echo '❌ Error: Required environment variables not set!'
-          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up'
+          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_USERNAME=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up'
           echo 'Required variables:'
           echo '  DOMAIN - Your domain name (e.g., example.com)'
           echo '  EMAIL - Email for Lets Encrypt certificates'
+          echo '  ADMIN_USERNAME - Admin username for Pangolin (usually email)'
           echo '  ADMIN_PASSWORD - Admin password for Pangolin (min 8 chars)'
           echo 'Optional variables:'
           echo '  ADMIN_SUBDOMAIN - Subdomain for admin portal (default: pangolin)'
@@ -58,6 +60,12 @@ services:
         # Validate email format
         if ! echo \"$$EMAIL\" | grep -E '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$$' > /dev/null; then
           echo '❌ Error: Invalid email format'
+          exit 1
+        fi
+
+        # Validate username as email format
+        if ! echo \"$$ADMIN_USERNAME\" | grep -E '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$$' > /dev/null; then
+          echo '❌ Error: Invalid admin username email format'
           exit 1
         fi
 
