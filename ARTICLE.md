@@ -232,6 +232,26 @@ services:
               - ./config/traefik/rules:/rules
               - ./config/traefik/logs:/var/log/traefik
 
+          middleware-manager:
+            image: hhftechnology/middleware-manager:v3.0.1
+            container_name: middleware-manager
+            restart: unless-stopped
+            volumes:
+              - ./data:/data
+              - ./config/traefik/rules:/conf
+              - ./config/middleware-manager:/app/config
+              - ./config/traefik:/etc/traefik
+            environment:
+              - PANGOLIN_API_URL=http://pangolin:3001/api/v1
+              - TRAEFIK_CONF_DIR=/conf
+              - DB_PATH=/data/middleware.db
+              - PORT=3456
+              - ACTIVE_DATA_SOURCE=pangolin
+              - TRAEFIK_STATIC_CONFIG_PATH=/etc/traefik/traefik_config.yml
+              - PLUGINS_JSON_URL=https://raw.githubusercontent.com/hhftechnology/middleware-manager/traefik-int/plugin/plugins.json
+      #      ports:
+      #        - "3456:3456"
+
         networks:
           default:
             driver: bridge
@@ -382,7 +402,205 @@ Test: `http://your-ip:9120` should now be inaccessible.
 
 ---
 
-### 9. 🔐 Generate API Key for Crowdsec Bouncer
+## 🚀 Step-by-Step Setup
+
+### 9.1. 📥 Get Your CrowdSec Enrollment Key
+
+- Visit https://app.crowdsec.net/
+- Copy your **Enrollment Key**
+
+![GetEnrollmentKey|690x220](upload://hOVaOEFujqfx3JxkEag9oxnYuZD.png)
+
+ 📸 Screenshot show the enrollment key copy location _
+
+---
+
+### 9.2. 📁 Set Up Directory Structure
+
+The target folder structure is important
+```
+
+/root/config/
+├── crowdsec/
+│   ├── acquis.d/                # Folder for log acquisition sources
+│   ├── acquis.yaml              # Defines log acquisition sources
+│   └── profiles.yaml            # Defines remediation profiles
+├── crowdsec_logs/               # Crowdsec Logs
+├── traefik/
+│   ├── conf/
+│   │   └── captcha.html         # HTML template for captcha challenges
+│   ├── rules/
+│       └── dynamic_config.yml   # Dynamic Traefik configuration
+│   ├── traefik_config.yml       # Static Traefik configuration
+│   └── logs/                    # Directory for Traefik logs
+└── letsencrypt/                 # Let's Encrypt certificates
+```
+
+To create this run the following:
+
+```bash
+mkdir -p ./config/crowdsec/db
+mkdir -p ./config/crowdsec/acquis.d
+mkdir -p ./config/traefik/logs
+mkdir -p ./config/traefik/conf
+mkdir -p ./config/crowdsec_logs
+````
+
+#### Optional: Add `.gitignore` (so you dont check in secrets into githib)
+
+Optional - if you are going to be checking in your config into GitHub please remember to create a .gitignore so confidential files are not checked in
+Your .gitignore  could look like
+```
+.env
+installer
+data/
+config/key
+config/crowdsec/db/crowdsec.db
+config/crowdsec/hub/
+config/db/db.sqlite
+config/traefik/logs/access.log
+config/crowdsec/local_api_credentials.yaml
+config/crowdsec/online_api_credentials.yaml
+config/crowdsec/appsec-configs/
+config/crowdsec/appsec-rules/
+config/crowdsec/collections/
+config/crowdsec/contexts/
+config/crowdsec/parsers/
+config/crowdsec/patterns/
+config/crowdsec/scenarios/
+*.bak.*
+```
+---
+
+### 9.3. 🛠️ Create Required Config Files
+
+Create these files under `./config/crowdsec`:
+
+#### `acquis.yaml` – for log sources (./config/crowdsec/acquis.yaml)
+```
+poll_without_inotify: false
+filenames:
+  - /var/log/traefik/*.log
+labels:
+  type: traefik
+---
+listen_addr: 0.0.0.0:7422
+appsec_config: crowdsecurity/appsec-default
+name: myAppSecComponent
+source: appsec
+labels:
+  type: appsec
+```
+
+This configuration:
+
+- Monitors system logs for SSH and authentication attacks
+- Watches Traefik logs for web attacks
+- Enables the Application Security (WAF) component on port 7422
+
+
+#### `profiles.yaml` – remediation profiles (./config/crowdsec/profiles.yaml)
+
+```
+name: captcha_remediation
+filters:
+  - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() contains "http"
+decisions:
+  - type: captcha
+    duration: 4h
+on_success: break
+
+---
+name: default_ip_remediation
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Ip"
+decisions:
+ - type: ban
+   duration: 4h
+on_success: break
+
+---
+name: default_range_remediation
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Range"
+decisions:
+ - type: ban
+   duration: 4h
+on_success: break
+
+```
+
+This configuration:
+
+- Creates a captcha profile for HTTP-related attacks
+- Sets up IP banning for other types of attacks
+- Configures ban durations of 4 hours
+Important: Make sure to comment out any notification configurations in this file (slack, splunk, http, email) if you’re not using them, as they might cause errors.
+
+
+
+### 9.4. 🧱 Traefik Setup
+
+#### Add Captcha Template:
+
+```bash
+cd ./config/traefik/conf
+wget https://gist.githubusercontent.com/hhftechnology/48569d9f899bb6b889f9de2407efd0d2/raw/captcha.html
+cd ../../..
+```
+
+
+---
+
+### 9.5. 🐳 Add CrowdSec to Docker Compose
+You’ll need to update your Docker Compose file to include CrowdSec. Here’s how to add the CrowdSec service.
+Make sure you insert your enrolment key that you obtain in a previous step
+
+```
+# Add CrowdSec services
+    crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    environment:
+        GID: "1000"
+        COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules crowdsecurity/linux
+        ENROLL_INSTANCE_NAME: "pangolin-crowdsec"
+        PARSERS: crowdsecurity/whitelists
+        ENROLL_TAGS: docker
+        ENROLL_KEY: INSERT-ENROLLMENT-KEY-HERE
+    healthcheck:
+        interval: 10s
+        retries: 15
+        timeout: 10s
+        test: ["CMD", "cscli", "capi", "status"]
+    labels:
+        - "traefik.enable=false" # Disable traefik for crowdsec
+    volumes:
+        # crowdsec container data
+        - ./config/crowdsec:/etc/crowdsec # crowdsec config
+        - ./config/crowdsec/db:/var/lib/crowdsec/data # crowdsec db
+        # log bind mounts into crowdsec
+        - ./config/traefik/logs:/var/log/traefik # traefik logs
+    ports:
+        - 6060:6060 # metrics endpoint for prometheus
+    restart: unless-stopped
+    command: -t # Add test config flag to verify configuration
+
+```
+
+
+This configuration:
+
+Sets up CrowdSec with the Traefik collections and parsers
+Maps volumes for configuration and logs
+Exposes the necessary ports for the API and metrics
+Configures health checks and dependencies
+
+
+---
+
+
+### 10. 🔐 Generate API Key for Crowdsec Bouncer
 
 ```bash
 docker exec crowdsec cscli bouncers add traefik-bouncer
@@ -401,7 +619,7 @@ Save the API key for use in the middleware.
 
 ---
 
-### 10. ☁️ Set Up Cloudflare Turnstile
+### 11. ☁️ Set Up Cloudflare Turnstile
 
 * Visit [https://dash.cloudflare.com/](https://dash.cloudflare.com/)
 * Create a **Turnstile Widget**
@@ -412,7 +630,7 @@ Save the API key for use in the middleware.
 
 ---
 
-### 11. 🧩 Add the Crowdsec Bouncer Plugin in the Middleware Manager
+### 12. 🧩 Add the Crowdsec Bouncer Plugin in the Middleware Manager
 We now use the middleware manager to install the Crowdsec Bouncer Plugin to our traefik_config
 
 ![InstallCrowdsecBouncerWithMiddleware|690x441](upload://rDfaxXfU3EnA0cB9q2m46BlmOzn.png)
@@ -421,7 +639,7 @@ We now use the middleware manager to install the Crowdsec Bouncer Plugin to our 
 📸 Screenshot - Adding Plugin
 ---
 
-### 12. 🧩 Add the Middleware in Middleware Manager
+### 13. 🧩 Add the Middleware in Middleware Manager
 
 Navigate to **Middleware Manager > Plugins** and configure the CrowdSec plugin with:
 
@@ -448,7 +666,7 @@ Navigate to **Middleware Manager > Plugins** and configure the CrowdSec plugin w
 
 ---
 
-### 13. 🌐 Protect a Resource
+### 14. 🌐 Protect a Resource
 
 Protect a test or live resource (e.g., `secure.yourdomain.com`) in Pangolin and attach the **CrowdSec middleware** using the Middleware Manager.
 
@@ -458,7 +676,7 @@ Protect a test or live resource (e.g., `secure.yourdomain.com`) in Pangolin and 
 
 ---
 
-### 14. 🧪 Test
+### 15. 🧪 Test
 
 Manually trigger a CAPTCHA challenge:
 
