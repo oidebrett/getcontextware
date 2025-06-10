@@ -393,7 +393,7 @@ Deployment completed at: $(date)
 
 🌐 Access Information:
 - Dashboard URL: https://${ADMIN_SUBDOMAIN}.${DOMAIN}
-- Admin Login: admin@${DOMAIN}
+- Admin Login: ${ADMIN_USERNAME}
 - Admin Password: [Set during deployment]
 
 📁 Directory Structure Created:

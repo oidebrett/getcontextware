@@ -47,7 +47,7 @@ echo "🌐 Once ready, access your dashboard at:"
 echo "   https://$DOMAIN"
 echo
 echo "👤 Admin login:"
-echo "   Username: admin@$DOMAIN"
+echo "   Username: $ADMIN_USERNAME"
 echo "   Password: $ADMIN_PASSWORD"
 echo
 echo "⚠️  Note: Let's Encrypt certificates may take a few minutes to issue"

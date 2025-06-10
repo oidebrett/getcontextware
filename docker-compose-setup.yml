@@ -198,7 +198,7 @@ services:
         echo '✅ Setup completed! The stack is ready to start.'
         echo '📊 Start your services with: docker compose up -d'
         echo '🌐 Access at: https://'"$$ADMIN_SUBDOMAIN"'.'"$$DOMAIN"
-        echo '👤 Admin login: admin@'"$$DOMAIN"
+        echo '👤 Admin login: '"$$ADMIN_USERNAME"'
 
         # Keep container running briefly to show completion message
         sleep 5
