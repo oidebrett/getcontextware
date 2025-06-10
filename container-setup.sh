@@ -82,12 +82,6 @@ http:
     redirect-to-https:
       redirectScheme:
         scheme: https
-    default-whitelist:
-      ipWhiteList:
-        sourceRange:
-        - "10.0.0.0/8"
-        - "192.168.0.0/16"
-        - "172.16.0.0/12"
     security-headers:
       headers:
         customResponseHeaders:
@@ -101,24 +95,6 @@ http:
         stsIncludeSubdomains: true
         stsSeconds: 63072000
         stsPreload: true
-    crowdsec:
-      plugin:
-        crowdsec:
-          enabled: true
-          logLevel: INFO
-          updateIntervalSeconds: 15
-          crowdsecMode: live
-          crowdsecAppsecEnabled: true
-          crowdsecAppsecHost: crowdsec:7422
-          crowdsecLapiKey: "PUT_YOUR_BOUNCER_KEY_HERE_OR_IT_WILL_NOT_WORK"
-          crowdsecLapiHost: crowdsec:8080
-          crowdsecLapiScheme: http
-          forwardedHeadersTrustedIPs:
-            - "0.0.0.0/0"
-          clientTrustedIPs:
-            - "10.0.0.0/8"
-            - "172.16.0.0/12"
-            - "192.168.0.0/16"
 
   routers:
     # HTTP to HTTPS redirect router
@@ -138,7 +114,6 @@ http:
         - websecure
       middlewares:
         - security-headers
-        - crowdsec
       tls:
         certResolver: letsencrypt
 
@@ -150,7 +125,6 @@ http:
         - websecure
       middlewares:
         - security-headers
-        - crowdsec
       tls:
         certResolver: letsencrypt
 
@@ -162,7 +136,6 @@ http:
         - websecure
       middlewares:
         - security-headers
-        - crowdsec
       tls:
         certResolver: letsencrypt
 
