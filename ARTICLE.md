@@ -34,7 +34,12 @@ wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/co
 ```
 
 Edit `ferretdb.compose.yaml` to append the network config at the end.
-
+```
+networks:
+  default:
+    external: true
+    name: pangolin
+```
 ---
 
 ### 1.2 Configure `compose.env`
@@ -77,13 +82,180 @@ In Komodo:
 
 * Create new stack: **`pangolin-setup`**
 * Choose **UI Defined**
-* Paste in the full `pangolin-setup` container configuration script (see full script above)
+* Paste in the full `pangolin-setup` container configuration script (see full script below)
+
+```
+services:
+  # Setup container that creates folder structure and config files
+  setup:
+    image: alpine:latest
+    container_name: pangolin-setup
+    volumes:
+      - ./:/host-setup
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOMAIN=${DOMAIN:-}
+      - EMAIL=${EMAIL:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
+      - GITHUB_USER=${GITHUB_USER:-oidebrett}
+      - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
+      - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
+    command: |
+      sh -c "
+        echo '🚀 Starting Pangolin setup container...'
+
+        # Install required tools
+        apk add --no-cache curl docker-cli openssl
+
+        # Validate required environment variables
+        if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
+          echo '❌ Error: Required environment variables not set!'
+          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_USERNAME=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up'
+          echo 'Required variables:'
+          echo '  DOMAIN - Your domain name (e.g., example.com)'
+          echo '  EMAIL - Email for Lets Encrypt certificates'
+          echo '  ADMIN_USERNAME - Admin username for Pangolin (email format)'
+          echo '  ADMIN_PASSWORD - Admin password for Pangolin (min 8 chars)'
+          echo 'Optional variables:'
+          echo '  ADMIN_SUBDOMAIN - Subdomain for admin portal (default: pangolin)'
+          exit 1
+        fi
+
+        # Check if config folder already exists
+        if [ -d \"/host-setup/config\" ]; then
+          echo '⚠️ Config folder already exists!'
+          echo 'To avoid overwriting your configuration, setup will not proceed.'
+          echo 'If you want to run setup again, please remove or rename the existing config folder.'
+          exit 1
+        fi
+
+        # Validate domain format
+        if ! echo \"$$DOMAIN\" | grep -E '^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\\.[a-zA-Z]{2,}$$' > /dev/null; then
+          echo '❌ Error: Invalid domain format'
+          exit 1
+        fi
+
+        # Validate email format
+        if ! echo \"$$EMAIL\" | grep -E '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$$' > /dev/null; then
+          echo '❌ Error: Invalid email format'
+          exit 1
+        fi
+
+        # Validate username email format
+        if ! echo \"$$ADMIN_USERNAME\" | grep -E '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$$' > /dev/null; then
+          echo '❌ Error: Invalid admin username email format'
+          exit 1
+        fi
+
+        # Validate password length
+        if [ $${#ADMIN_PASSWORD} -lt 8 ]; then
+          echo '❌ Error: Password must be at least 8 characters long'
+          exit 1
+        fi
+
+        echo '✅ Environment variables validated'
+
+        # Download container setup script from GitHub
+        echo '📥 Downloading setup script from GitHub...'
+        BASE_URL=\"https://raw.githubusercontent.com/$$GITHUB_USER/$$GITHUB_REPO/$$GITHUB_BRANCH\"
+
+        if ! curl -fsSL \"$$BASE_URL/container-setup.sh\" -o /container-setup.sh; then
+          echo '❌ Failed to download setup script from GitHub'
+          echo 'Make sure the repository exists and is accessible:'
+          echo \"$$BASE_URL/container-setup.sh\"
+          exit 1
+        fi
+
+        chmod +x /container-setup.sh
+        echo '✅ Setup script downloaded'
+
+        # Run the setup script
+        echo '🔧 Running setup script...'
+        /container-setup.sh
+
+        # Create docker-compose.yml for services
+        echo '📝 Creating docker-compose.yml for services...'
+        cat > /host-setup/docker-compose.yml << 'EOF'
+        services:
+          # Main Pangolin application
+          pangolin:
+            image: fosrl/pangolin:1.5.0
+            container_name: pangolin
+            restart: unless-stopped
+            volumes:
+              - ./config:/app/config
+            healthcheck:
+              test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
+              interval: "3s"
+              timeout: "3s"
+              retries: 15
+
+          # Gerbil WireGuard management
+          gerbil:
+            image: fosrl/gerbil:1.0.0
+            container_name: gerbil
+            restart: unless-stopped
+            depends_on:
+              pangolin:
+                condition: service_healthy
+            command:
+              - --reachableAt=http://gerbil:3003
+              - --generateAndSaveKeyTo=/var/config/key
+              - --remoteConfig=http://pangolin:3001/api/v1/gerbil/get-config
+              - --reportBandwidthTo=http://pangolin:3001/api/v1/gerbil/receive-bandwidth
+            volumes:
+              - ./config/:/var/config
+            cap_add:
+              - NET_ADMIN
+              - SYS_MODULE
+            ports:
+              - 51820:51820/udp
+              - 443:443 # Port for traefik because of the network_mode
+              - 80:80 # Port for traefik because of the network_mode
+
+          # Traefik reverse proxy
+          traefik:
+            image: traefik:v3.4.0
+            container_name: traefik
+            restart: unless-stopped
+            network_mode: service:gerbil # Ports appear on the gerbil service
+            depends_on:
+              pangolin:
+                condition: service_healthy
+            command:
+              - --configFile=/etc/traefik/traefik_config.yml
+            volumes:
+              - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
+              - ./config/letsencrypt:/letsencrypt # Volume to store the Lets Encrypt certificates
+              - ./config/traefik/rules:/rules
+              - ./config/traefik/logs:/var/log/traefik
+
+        networks:
+          default:
+            driver: bridge
+            name: pangolin
+      EOF
+      
+        echo '✅ Setup completed! The stack is ready to start.'
+        echo '📊 Start your services with: docker compose up -d'
+        echo '🌐 Access at: https://'"$$ADMIN_SUBDOMAIN"'.'"$$DOMAIN"
+        echo '👤 Admin login: '"$$ADMIN_USERNAME"
+
+        # Keep container running briefly to show completion message
+        sleep 5
+
+      "
+    restart: "no"
+```
+
 * Add these environment variables:
 
 ```bash
 DOMAIN=yourdomain.com
 EMAIL=admin@yourdomain.com
-ADMIN_USERNAME=securepassword
+ADMIN_USERNAME=admin@yourdomain.com
 ADMIN_PASSWORD=securepassword
 ADMIN_SUBDOMAIN=pangolin
 ```
@@ -139,9 +311,46 @@ Now access Komodo at:
 https://komodo.yourdomain.com
 ```
 
+## 🔐 Step 6: Secure Middleware Manger with Pangolin
+
+1. Add a **new resource** in Pangolin:
+
+   * Name: `middleware-manager.yourdomain.com`
+   * Target: `middleware-manager`
+   * Port: `3456`
+   * Site: Local
+   * Protected: ✅ Yes
+
+> 📸 *Screenshot suggestion: Pangolin resource setup*
+
+Now access Middleware Manager at:
+
+```
+https://middleware-manager.yourdomain.com
+```
+
 ---
 
-## 🔥 Step 6: Lock Down Komodo Port
+## 🔐 Step 7: Secure Traefik Dashboard with Pangolin
+
+1. Add a **new resource** in Pangolin:
+
+   * Name: `traefik.yourdomain.com`
+   * Target: `loalhost`
+   * Port: `8080`
+   * Site: Local
+   * Protected: ✅ Yes
+
+> 📸 *Screenshot suggestion: Pangolin resource setup*
+
+Now access Traefik Dashboard at:
+
+```
+https://traefik.yourdomain.com
+```
+
+
+## 🔥 Step 8: Lock Down Komodo Port
 
 If open, close direct access:
 
@@ -169,43 +378,100 @@ Test: `http://your-ip:9120` should now be inaccessible.
 
 ---
 
-## 💡 Step 7: Bonus – Integrate CrowdSec (Optional)
+# Crowdsec
 
-If you’ve set up CrowdSec previously:
+---
 
-* Stop `pangolin-stack`
-* Update `docker-compose.yml` in `pangolin-setup`
-* Add the correct `ENROLL_KEY`
-* Shell into the `crowdsec` container:
+### 9. 🔐 Generate API Key for Crowdsec Bouncer
 
 ```bash
-docker run --rm -it \
-  --name crowdsec-shell \
-  -v "$(pwd)/config/crowdsec:/etc/crowdsec" \
-  crowdsecurity/crowdsec:latest
+docker exec crowdsec cscli bouncers add traefik-bouncer
 ```
+it will return something like
 
-Then run:
+```
+API key for 'traefik-bouncer':
+
+   YOUR-LAPI-KEY-HERE
+
+Please keep this key since you will not be able to retrieve it! You will need it later
+
+```
+Save the API key for use in the middleware.
+
+---
+
+### 10. ☁️ Set Up Cloudflare Turnstile
+
+* Visit [https://dash.cloudflare.com/](https://dash.cloudflare.com/)
+* Create a **Turnstile Widget**
+* Copy the **site key** and **secret key**
+![AddingTurnstyle|598x500](upload://q1h7CRHg83SajaisbcsRSUxQjRj.png)
+
+📸 Screenshot Widget config page
+
+---
+
+### 11. 🧩 Add the Crowdsec Bouncer Plugin in the Middleware Manager
+We now use the middleware manager to install the Crowdsec Bouncer Plugin to our traefik_config
+
+![InstallCrowdsecBouncerWithMiddleware|690x441](upload://rDfaxXfU3EnA0cB9q2m46BlmOzn.png)
+
+
+📸 Screenshot - Adding Plugin
+---
+
+### 12. 🧩 Add the Middleware in Middleware Manager
+
+Navigate to **Middleware Manager > Plugins** and configure the CrowdSec plugin with:
+
+```json
+{
+  "crowdsec-bouncer-traefik": {
+    "enabled": true,
+    "captchaProvider": "turnstile",
+    "captchaSiteKey": "YOUR_TURNSTILE_KEY",
+    "captchaSecretKey": "YOUR_TURNSTILE_SECRET",
+    "captchaHTMLFilePath": "/etc/traefik/conf/captcha.html",
+    "crowdsecLapiHost": "crowdsec:8080",
+    "crowdsecAppsecHost": "crowdsec:7422",
+    "crowdsecLapiKey": "YOUR_API_KEY",
+    "crowdsecMode": "live",
+    "clientTrustedIPs": [],
+    "forwardedHeadersTrustedIPs": ["0.0.0.0/0"]
+  }
+}
+```
+![EditCrowdsecMiddleware|690x485](upload://pvnoxppcP3MFIoz5bKfdAaownf8.png)
+
+📸 *Screenshot Middleware Manager CrowdSec form*
+
+---
+
+### 13. 🌐 Protect a Resource
+
+Protect a test or live resource (e.g., `secure.yourdomain.com`) in Pangolin and attach the **CrowdSec middleware** using the Middleware Manager.
+
+![AddingMiddleToResource|684x500](upload://3sWJl6Ih46H1YTeqKfsAvUjJDmu.png)
+
+📸 *Screenshot: Attaching middleware to resource*
+
+---
+
+### 14. 🧪 Test
+
+Manually trigger a CAPTCHA challenge:
 
 ```bash
-cscli hub update
-cscli capi register
-cscli console enroll <instance-id>
+docker exec crowdsec cscli decisions add --ip YOUR_IP --type captcha -d 1h
 ```
+![decision-captcha|690x98](upload://fXClLCIPay1p4DYWVBV2PymRVNC.png)
 
-If patterns are missing:
+Visit your protected site and validate the CAPTCHA appears.
+![Captcha|690x451](upload://ilyXKvCRtJEVxhSL4Q3xBVmeChp.png)
 
-```bash
-wget -P /opt https://github.com/crowdsecurity/crowdsec/archive/refs/tags/v1.6.9-rc2.zip
-unzip /opt/v1.6.9-rc2.zip -d /opt
-cp -r /opt/crowdsec-1.6.9-rc2/config/patterns/* /etc/crowdsec/patterns/
-```
+---
 
-Restart:
-
-```bash
-docker compose up -d
-```
 
 ---
 
@@ -215,6 +481,7 @@ You now have a complete development and deployment environment using:
 
 * **Komodo** for remote deployment, scripting, and stack control
 * **Pangolin** for secure reverse proxy access
+* **Middleware Manager** for advanced management
 * Optional **CrowdSec** for behavioral protection
 
 ---
