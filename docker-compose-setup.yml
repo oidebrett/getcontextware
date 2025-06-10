@@ -9,6 +9,7 @@ services:
     environment:
       - DOMAIN=${DOMAIN:-}
       - EMAIL=${EMAIL:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
@@ -29,12 +30,13 @@ services:
         apk add --no-cache curl docker-cli openssl
 
         # Validate required environment variables
-        if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
+        if [ -z \"$$DOMAIN\" ] || [ -z \"$$EMAIL\" ] || [ -z \"$$ADMIN_USERNAME\" ] || [ -z \"$$ADMIN_PASSWORD\" ]; then
           echo '❌ Error: Required environment variables not set!'
-          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up'
+          echo 'Usage: DOMAIN=example.com EMAIL=admin@example.com ADMIN_USERNAME=admin@example.com ADMIN_PASSWORD=mypassword docker compose -f docker-compose-setup.yml up'
           echo 'Required variables:'
           echo '  DOMAIN - Your domain name (e.g., example.com)'
           echo '  EMAIL - Email for Lets Encrypt certificates'
+          echo '  ADMIN_USERNAME - Admin username for Pangolin (usually email)'
           echo '  ADMIN_PASSWORD - Admin password for Pangolin (min 8 chars)'
           echo 'Optional variables:'
           echo '  ADMIN_SUBDOMAIN - Subdomain for admin portal (default: pangolin)'
@@ -58,6 +60,12 @@ services:
         # Validate email format
         if ! echo \"$$EMAIL\" | grep -E '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$$' > /dev/null; then
           echo '❌ Error: Invalid email format'
+          exit 1
+        fi
+
+        # Validate username as email format
+        if ! echo \"$$ADMIN_USERNAME\" | grep -E '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$$' > /dev/null; then
+          echo '❌ Error: Invalid admin username email format'
           exit 1
         fi
 
@@ -149,39 +157,33 @@ services:
           cat >> /host-setup/docker-compose.yml << EOF
 
           crowdsec:
-            command: -t
+            image: crowdsecurity/crowdsec:latest
             container_name: crowdsec
             environment:
-              ACQUIRE_FILES: /var/log/traefik/*.log
+              GID: "1000"
               COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules crowdsecurity/linux
-              ENROLL_INSTANCE_NAME: pangolin-crowdsec
+              ENROLL_INSTANCE_NAME: "pangolin-crowdsec"
+              PARSERS: crowdsecurity/whitelists
               ENROLL_TAGS: docker
               ENROLL_KEY: "$$CROWDSEC_ENROLLMENT_KEY"
-              GID: "1000"
-              PARSERS: crowdsecurity/whitelists
             healthcheck:
-              test: [ "CMD", "cscli", "capi", "status" ]
-            image: crowdsecurity/crowdsec:latest
-            depends_on:
-              - gerbil  
+              interval: 10s
+              retries: 15
+              timeout: 10s
+              test: ["CMD", "cscli", "capi", "status"]
             labels:
-              - traefik.enable=false
-            ports:
-              - 8080:8080
-              - 6060:6060
-            expose:
-              - 8080
-              - 6060
-              - 7422
-            restart: unless-stopped
+              - "traefik.enable=false" # Disable traefik for crowdsec
             volumes:
-              - ./config/crowdsec:/etc/crowdsec
-              - ./config/crowdsec/db:/var/lib/crowdsec/data
-              - ./config/crowdsec_logs/auth.log:/var/log/auth.log:ro
-              - ./config/crowdsec_logs/syslog:/var/log/syslog:ro
-              - ./config/crowdsec_logs:/var/log
-              - ./config/traefik/logs:/var/log/traefik
-              - ./config/traefik/conf/captcha.html:/etc/traefik/conf/captcha.html
+              # crowdsec container data
+              - ./config/crowdsec:/etc/crowdsec # crowdsec config
+              - ./config/crowdsec/db:/var/lib/crowdsec/data # crowdsec db
+              # log bind mounts into crowdsec
+              - ./config/traefik/logs:/var/log/traefik # traefik logs
+            ports:
+              - 6060:6060 # metrics endpoint for prometheus
+            restart: unless-stopped
+            command: -t # Add test config flag to verify configuration
+
       EOF
 
         fi
