@@ -70,6 +70,9 @@ decisions:
    duration: 4h
 on_success: break
 EOF
+    
+    wget -O /host-setup/config/traefik/conf/captcha.html https://gist.githubusercontent.com/hhftechnology/48569d9f899bb6b889f9de2407efd0d2/raw/captcha.html 
+    
 }
 
 # Function to update dynamic config with CrowdSec middleware

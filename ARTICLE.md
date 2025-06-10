@@ -390,6 +390,7 @@ ports:
 Restart:
 
 ```bash
+cd komodo
 docker compose -p komodo -f ferretdb.compose.yaml --env-file compose.env down
 docker compose -p komodo -f ferretdb.compose.yaml --env-file compose.env up -d --force-recreate
 ```
