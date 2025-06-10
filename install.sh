@@ -127,6 +127,8 @@ echo
 echo "1. Set your configuration:"
 echo "   export DOMAIN=your-domain.com"
 echo "   export EMAIL=your-email@example.com"
+echo "   export ADMIN_SUBDOMAIN=pangolin"
+echo "   export ADMIN_USERNAME=admin@example.com"
 echo "   export ADMIN_PASSWORD=your-secure-password"
 echo
 echo "2. Run the setup first (only needed once):"
@@ -136,7 +138,7 @@ echo "3. After setup completes, start the services:"
 echo "   docker compose up -d"
 echo
 echo "Or run setup in one command:"
-echo "   DOMAIN=your-domain.com EMAIL=your-email@example.com ADMIN_PASSWORD=your-password docker compose -f docker-compose-setup.yml up"
+echo "   DOMAIN=your-domain.com ADMIN_SUBDOMAIN=pangolin EMAIL=your-email@example.com ADMIN_PASSWORD=admin@example.com ADMIN_PASSWORD=your-password docker compose -f docker-compose-setup.yml up"
 echo
 print_warning "⚠️  Important:"
 echo "   • Make sure your domain points to this server's IP"

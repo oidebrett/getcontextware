@@ -83,6 +83,7 @@ In Komodo:
 ```bash
 DOMAIN=yourdomain.com
 EMAIL=admin@yourdomain.com
+ADMIN_USERNAME=securepassword
 ADMIN_PASSWORD=securepassword
 ADMIN_SUBDOMAIN=pangolin
 ```
