@@ -230,6 +230,10 @@ flags:
     disable_user_create_org: false
     allow_raw_resources: true
     allow_base_domain_resources: true
+
+postgres:
+    connection_string: postgresql://"${POSTGRES_USER:-postgres}":"${POSTGRES_PASSWORD:-postgres}"@pangolin-postgres:5432/postgres
+
 EOF
 
 echo "✅ config.yml created"
