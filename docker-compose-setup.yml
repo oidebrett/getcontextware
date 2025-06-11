@@ -12,6 +12,8 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
       - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
@@ -101,7 +103,7 @@ services:
         services:
           # Main Pangolin application
           pangolin:
-            image: fosrl/pangolin:1.5.0
+            image:  fosrl/pangolin:postgresql-latest
             container_name: pangolin
             restart: unless-stopped
             volumes:
@@ -111,6 +113,22 @@ services:
               interval: "3s"
               timeout: "3s"
               retries: 15
+
+          # postgres for pangoln
+          postgres:
+            image: postgres:17
+            container_name: postgres
+            restart: unless-stopped
+            environment:
+              POSTGRES_USER: $$POSTGRES_USER 
+              POSTGRES_PASSWORD: $$POSTGRES_PASSWORD
+            volumes:
+              - ./config/postgres:/var/lib/postgresql/data
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U postgres"]
+              interval: 10s
+              timeout: 5s
+              retries: 5
 
           # Gerbil WireGuard management
           gerbil:
@@ -152,6 +170,7 @@ services:
               - ./config/traefik/rules:/rules
               - ./config/traefik/logs:/var/log/traefik
               
+          # Middleware Manager for Traefik / Pangolin
           middleware-manager:
             image: hhftechnology/middleware-manager:v3.0.1
             container_name: middleware-manager
@@ -171,6 +190,16 @@ services:
               - PLUGINS_JSON_URL=https://raw.githubusercontent.com/hhftechnology/middleware-manager/traefik-int/plugin/plugins.json
       #      ports:
       #        - "3456:3456"
+
+          # Test http server - can be removed
+          python-http:
+            image: python:3.11-slim
+            container_name: python-http
+            working_dir: /app
+            command: python -m http.server 15000
+            ports:
+              - "15000:15000"
+            restart: unless-stopped
 
       EOF
 
