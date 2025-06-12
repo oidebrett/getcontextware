@@ -443,6 +443,53 @@ EOF
 
 }
 
+# Start by delete all the tables that are there
+
+PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" <<EOF
+DELETE FROM public."domains";
+DELETE FROM public."orgs";
+DELETE FROM public."orgDomains";
+DELETE FROM public."exitNodes";
+DELETE FROM public."sites";
+DELETE FROM public."resources";
+DELETE FROM public."targets";
+DELETE FROM public."idp";
+DELETE FROM public."user";
+DELETE FROM public."newt";
+DELETE FROM public."twoFactorBackupCodes";
+DELETE FROM public."session";
+DELETE FROM public."newtSession";
+DELETE FROM public."actions";
+DELETE FROM public."roles";
+DELETE FROM public."userOrgs";
+DELETE FROM public."emailVerificationCodes";
+DELETE FROM public."passwordResetTokens";
+DELETE FROM public."roleActions";
+DELETE FROM public."userActions";
+DELETE FROM public."roleSites";
+DELETE FROM public."userSites";
+DELETE FROM public."roleResources";
+DELETE FROM public."userResources";
+DELETE FROM public."limits";
+DELETE FROM public."userInvites";
+DELETE FROM public."resourcePincode";
+DELETE FROM public."resourcePassword";
+DELETE FROM public."resourceAccessToken";
+DELETE FROM public."resourceWhitelist";
+DELETE FROM public."resourceSessions";
+DELETE FROM public."resourceOtp";
+DELETE FROM public."versionMigrations";
+DELETE FROM public."resourceRules";
+DELETE FROM public."supporterKey";
+DELETE FROM public."idpOidcConfig";
+DELETE FROM public."licenseKey";
+DELETE FROM public."hostMeta";
+DELETE FROM public."apiKeys";
+DELETE FROM public."apiKeyActions";
+DELETE FROM public."apiKeyOrg";
+DELETE FROM public."idpOrg";
+EOF
+
 # Create PostgreSQL structure
 create_postgres_structure "$PG_HOST" "$PG_PORT" "$PG_USER" "$PG_PASS" "$PG_DB"
 
