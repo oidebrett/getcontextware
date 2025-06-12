@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Load environment variables from .env file
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
 # Import CSV data into PostgreSQL
 set -e
 
@@ -18,10 +23,10 @@ echo "PostgreSQL container IP: $PG_IP"
 
 EXPORT_DIR="${1:-./postgres_export}"
 PG_HOST=$PG_IP
-PG_PORT="${3:-5432}"
-PG_USER="${4:-$POSTGRES_USER}"
-PG_PASS="${5:-$POSTGRES_PASSWORD}"
-PG_DB="${6:-postgres}"
+PG_PORT="5432"
+PG_USER=$POSTGRES_USER
+PG_PASS=$POSTGRES_PASSWORD"
+PG_DB="postgres"
 
 echo "Creating PostgreSQL schema..."
 
