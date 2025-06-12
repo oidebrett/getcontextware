@@ -146,6 +146,8 @@ services:
 
         fi
 
+        # Append gerbil block (always)
+        cat >> /host-setup/docker-compose.yml << EOF
           # Gerbil WireGuard management
           gerbil:
             image: fosrl/gerbil:1.0.0
