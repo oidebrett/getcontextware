@@ -19,6 +19,7 @@ services:
       - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
       - CROWDSEC_ENROLLMENT_KEY=${CROWDSEC_ENROLLMENT_KEY:-}
+      - STATIC_PAGE=${STATIC_PAGE:-}
     command: |
       sh -c "
         # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
