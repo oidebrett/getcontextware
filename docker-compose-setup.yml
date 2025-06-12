@@ -116,8 +116,8 @@ services:
               retries: 15
       EOF
 
-        # Part 1: Conditionally append standalone postgres if POSTGRES_HOST is set
-        if [ -n \"$POSTGRES_HOST\" ]; then
+        # Part 1: Conditionally append standalone postgres if POSTGRES_HOST not the komodo postgres
+        if [ "$POSTGRES_HOST" != "komodo-postgres-1" ]; then
           echo '🛡️ Adding Standalone Postgres database...'
           cat >> /host-setup/docker-compose.yml << EOF
 
