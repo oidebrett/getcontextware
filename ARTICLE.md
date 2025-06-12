@@ -705,6 +705,35 @@ You now have a complete development and deployment environment using:
 
 ---
 
+## Extra - Reuse komodo postgres
+
+if you want to standup a standlone postgres then you use this
+```
+DOMAIN=yourdomain.com
+EMAIL=emailt@yourdomain.com
+ADMIN_USERNAME=admin@yourdomain.com
+ADMIN_PASSWORD=PASSWORD
+ADMIN_SUBDOMAIN=pangolin
+CROWDSEC_ENROLLMENT_KEY=YOURKEYHERE
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=pangolin-postgres
+```
+
+if you want to reuse komodo's postgres
+```
+#alternative - reuse Komodo postgres
+DOMAIN=yourdomain.com
+EMAIL=emailt@yourdomain.com
+ADMIN_USERNAME=admin@yourdomain.com
+ADMIN_PASSWORD=PASSWORD
+ADMIN_SUBDOMAIN=pangolin
+CROWDSEC_ENROLLMENT_KEY=YOURKEYHERE
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=komodo-postgres-1
+```
+
 ## 🙌 Thank You
 
 Thanks for following this guide! With Komodo and Pangolin, you now have a powerful foundation for managing and securing your self-hosted applications.
