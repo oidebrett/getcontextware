@@ -113,9 +113,7 @@ services:
               interval: "3s"
               timeout: "3s"
               retries: 15
-            depends_on:
-              postgres:
-                condition: service_healthy
+
 
           # Gerbil WireGuard management
           gerbil:
