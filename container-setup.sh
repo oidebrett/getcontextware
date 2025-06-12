@@ -304,13 +304,69 @@ if [ -n "$STATIC_PAGE" ]; then
     
     # Create basic dynamic_config.yml without CrowdSec
     cat > /host-setup/public_html/index.html << EOF
-    <h1>Welcome</h1>
-    <p>Your server is up and running.</p>
-    <p><a href="https://${ADMIN_SUBDOMAIN}.${DOMAIN}">Login to Pangolin</a></p>
-    <p><a href="https://komodo.${DOMAIN}">Login to Komodo</a></p>
-    <p><a href="https://middleware-manager.${DOMAIN}">Login to Middleware-manager</a></p>
-    <p><a href="https://traefik.${DOMAIN}">Login to Traefik Dashboard</a></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-8 text-cyan-400">Welcome</h1>
+    <p class="text-gray-400 mb-6">Your server is up and running. Choose a service to log in:</p>
 
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+      <!-- Pangolin -->
+      <div class="bg-gray-800 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition transform duration-300">
+        <div class="p-5">
+          <div class="flex items-center mb-3">
+            <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/pangolin.webp" alt="Pangolin Icon" class="w-8 h-8 mr-3" />
+            <a href="https://pangolin.mcpgateway.online" target="_blank" class="text-xl font-semibold text-cyan-400 hover:text-cyan-300">Pangolin</a>
+          </div>
+          <p class="text-gray-300">Tunneled reverse proxy management server</p>
+        </div>
+      </div>
+
+      <!-- Komodo -->
+      <div class="bg-gray-800 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition transform duration-300">
+        <div class="p-5">
+          <div class="flex items-center mb-3">
+            <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/komodo.webp" alt="Komodo Icon" class="w-8 h-8 mr-3" />
+            <a href="https://komodo.mcpgateway.online" target="_blank" class="text-xl font-semibold text-cyan-400 hover:text-cyan-300">Komodo</a>
+          </div>
+          <p class="text-gray-300">Tool for building and deploying software on multiple servers</p>
+        </div>
+      </div>
+
+      <!-- Middleware Manager -->
+      <div class="bg-gray-800 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition transform duration-300">
+        <div class="p-5">
+          <div class="flex items-center mb-3">
+            <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/middleware-manager.webp" alt="Middleware Icon" class="w-8 h-8 mr-3" />
+            <a href="https://middleware-manager.mcpgateway.online" target="_blank" class="text-xl font-semibold text-cyan-400 hover:text-cyan-300">Middleware Manager</a>
+          </div>
+          <p class="text-gray-300">Traefik middleware, router, and server manager</p>
+        </div>
+      </div>
+
+      <!-- Traefik -->
+      <div class="bg-gray-800 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition transform duration-300">
+        <div class="p-5">
+          <div class="flex items-center mb-3">
+            <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/traefik.webp" alt="Traefik Icon" class="w-8 h-8 mr-3" />
+            <a href="https://traefik.mcpgateway.online" target="_blank" class="text-xl font-semibold text-cyan-400 hover:text-cyan-300">Traefik Dashboard</a>
+          </div>
+          <p class="text-gray-300">Cloud native application proxy</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
 EOF
 fi
 
