@@ -149,7 +149,7 @@ services:
         # Append gerbil block (always)
         cat >> /host-setup/docker-compose.yml << EOF
           # Gerbil WireGuard management
-          
+
           gerbil:
             image: fosrl/gerbil:1.0.0
             container_name: gerbil
@@ -188,6 +188,7 @@ services:
               - ./config/letsencrypt:/letsencrypt # Volume to store the Lets Encrypt certificates
               - ./config/traefik/rules:/rules
               - ./config/traefik/logs:/var/log/traefik
+              - ./public_html:/var/www/html:ro
               
           # Middleware Manager for Traefik / Pangolin
           middleware-manager:

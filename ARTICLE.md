@@ -734,6 +734,28 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_HOST=komodo-postgres-1
 ```
 
+
+if you want to include a static landing page
+```
+STATIC_PAGE=true
+```
+
+also add to middleware-manager/templates.yml:
+```
+- id: "statiq"
+  name: "statiq"
+  type: "plugin"
+  config:
+    statiq:
+      enableDirectoryListing: "false"
+      indexFiles:
+        - "index.html"
+        - "index.htm"
+      root: "/var/www/html"
+      spaIndex: "index.html"
+      spaMode: "false"
+```
+
 ## 🙌 Thank You
 
 Thanks for following this guide! With Komodo and Pangolin, you now have a powerful foundation for managing and securing your self-hosted applications.

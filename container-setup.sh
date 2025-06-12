@@ -160,6 +160,7 @@ echo "📁 Creating directory structure..."
 mkdir -p /host-setup/config/traefik
 mkdir -p /host-setup/config/traefik/rules
 mkdir -p /host-setup/config/letsencrypt
+mkdir -p /host-setup/public_html
 
 # Set proper permissions for Let's Encrypt directory
 chmod 600 /host-setup/config/letsencrypt
@@ -258,6 +259,9 @@ experimental:
     badger:
       moduleName: "github.com/fosrl/badger"
       version: "v1.2.0"
+    statiq:
+      moduleName: github.com/hhftechnology/statiq
+      version: v1.0.1
 
 log:
     level: "INFO"
@@ -293,6 +297,23 @@ serversTransport:
 EOF
 
 echo "✅ traefik_config.yml created"
+
+# Check if static page should be enabled
+if [ -n "$STATIC_PAGE" ]; then
+    echo "🛡️ Statuc page detected - setting up ..."
+    
+    # Create basic dynamic_config.yml without CrowdSec
+    cat > /host-setup/public_html/index.html << EOF
+    <h1>Welcome</h1>
+    <p>Your server is up and running.</p>
+    <p><a href="https://${ADMIN_SUBDOMAIN}.${DOMAIN}">Login to Pangolin</a></p>
+    <p><a href="https://komodo.${DOMAIN}">Login to Komodo</a></p>
+    <p><a href="https://middleware-manager.${DOMAIN}">Login to Middleware-manager</a></p>
+    <p><a href="https://traefik.${DOMAIN}">Login to Traefik Dashboard</a></p>
+
+EOF
+fi
+
 
 # Check if CrowdSec should be enabled
 if [ -n "$CROWDSEC_ENROLLMENT_KEY" ]; then
