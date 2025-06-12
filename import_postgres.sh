@@ -3,8 +3,21 @@
 # Import CSV data into PostgreSQL
 set -e
 
+PG_CONTAINER_NAME="pangolin-postgres"
+PG_IP=$(docker network inspect pangolin 2>/dev/null | \
+    awk "/\"Name\": \"$PG_CONTAINER_NAME\"/,/IPv4Address/" | \
+    grep '"IPv4Address"' | \
+    sed -E 's/.*"IPv4Address": "([^/]+)\/.*",/\1/')
+
+if [ -z "$PG_IP" ]; then
+    echo "Error: Could not find IP address for container '$PG_CONTAINER_NAME'"
+    exit 1
+fi
+
+echo "PostgreSQL container IP: $PG_IP"
+
 EXPORT_DIR="${1:-./postgres_export}"
-PG_HOST="${2:-pangolin-postgres}"
+PG_HOST=$PG_IP
 PG_PORT="${3:-5432}"
 PG_USER="${4:-postgres}"
 PG_PASS="${5:-postgres}"
