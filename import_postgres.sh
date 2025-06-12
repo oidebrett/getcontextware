@@ -8,7 +8,7 @@ fi
 # Import CSV data into PostgreSQL
 set -e
 
-PG_CONTAINER_NAME="pangolin-postgres"
+PG_CONTAINER_NAME=$POSTGRES_PASSWORD
 PG_IP=$(docker network inspect pangolin 2>/dev/null | \
     awk "/\"Name\": \"$PG_CONTAINER_NAME\"/,/IPv4Address/" | \
     grep '"IPv4Address"' | \

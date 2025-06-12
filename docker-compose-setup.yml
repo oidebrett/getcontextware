@@ -14,6 +14,7 @@ services:
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
       - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
