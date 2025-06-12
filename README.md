@@ -77,6 +77,10 @@ The deployment requires three environment variables:
 - **ADMIN_SUBDOMAIN** - Subdomain for the admin portal (default: `pangolin`)
 - **ADMIN_USERNAME** - Admin username for Pangolin (email format)
 - **ADMIN_PASSWORD** - Admin password for Pangolin (minimum 8 characters)
+- **ADMIN_SUBDOMAIN** - Subdomain for the admin portal (default: `pangolin`)
+- **CROWDSEC_ENROLLMENT_KEY** - CrowdSec enrollment key (optional)
+- **POSTGRES_USER** - Postgres username (default: `postgres`)
+- **POSTGRES_PASSWORD** - Postgres password (default: `postgres`)
 
 You may see an error: Invalid configuration file: Validation error: Your password must meet the following conditions:
 at least one uppercase English letter,

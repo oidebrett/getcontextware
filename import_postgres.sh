@@ -19,8 +19,8 @@ echo "PostgreSQL container IP: $PG_IP"
 EXPORT_DIR="${1:-./postgres_export}"
 PG_HOST=$PG_IP
 PG_PORT="${3:-5432}"
-PG_USER="${4:-postgres}"
-PG_PASS="${5:-postgres}"
+PG_USER="${4:-$POSTGRES_USER}"
+PG_PASS="${5:-$POSTGRES_PASSWORD}"
 PG_DB="${6:-postgres}"
 
 echo "Creating PostgreSQL schema..."
