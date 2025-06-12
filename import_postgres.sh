@@ -25,7 +25,7 @@ EXPORT_DIR="${1:-./postgres_export}"
 PG_HOST=$PG_IP
 PG_PORT="5432"
 PG_USER=$POSTGRES_USER
-PG_PASS=$POSTGRES_PASSWORD"
+PG_PASS=$POSTGRES_PASSWORD
 PG_DB="postgres"
 
 echo "Creating PostgreSQL schema..."
