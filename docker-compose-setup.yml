@@ -14,7 +14,7 @@ services:
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN:-pangolin}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_HOST=${POSTGRES_HOST:-pangolin-postgres}
       - GITHUB_USER=${GITHUB_USER:-oidebrett}
       - GITHUB_REPO=${GITHUB_REPO:-getcontextware}
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
@@ -125,7 +125,7 @@ services:
             restart: unless-stopped
             environment:
               POSTGRES_USER: ${POSTGRES_USER:-postgres} 
-              POSTGRES_PASSWORD: ${POSTGRES_PASWORD:-postgres}
+              POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
               POSTGRES_DB: postgres
             volumes:
               - ./config/postgres:/var/lib/postgresql/data
