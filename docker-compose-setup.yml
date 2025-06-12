@@ -114,6 +114,13 @@ services:
               interval: "3s"
               timeout: "3s"
               retries: 15
+      EOF
+
+        # Part 1: Conditionally append standalone postgres if POSTGRES_HOST is set
+        if [ -n \"$POSTGRES_HOST\" ]; then
+          echo '🛡️ Adding Standalone Postgres database...'
+          cat >> /host-setup/docker-compose.yml << EOF
+
             depends_on:
               postgres:
                 condition: service_healthy
@@ -134,6 +141,10 @@ services:
               interval: 10s
               timeout: 5s
               retries: 5
+
+      EOF
+
+        fi
 
           # Gerbil WireGuard management
           gerbil:
