@@ -1,0 +1,2 @@
+id,email,username,name,type,idpId,passwordHash,twoFactorEnabled,twoFactorSecret,emailVerified,dateCreated,serverAdmin
+2zd8jy2kvbunwv1,admin@mcpgateway.online,admin@mcpgateway.online,,internal,,"$argon2id$v=19$m=19456,t=2,p=1$JIRAaPCuHNDsWq8r3OD29Q$hOo+ZlLM+S9wSB+9rEPyPd57shwvfnxWd0oiiSunooE",f,,t,2025-06-12T11:55:50.529Z,t
