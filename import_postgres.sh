@@ -459,10 +459,31 @@ for table in "${TABLES[@]}"; do
     if [[ -f "$CSV_FILE" && $(wc -l < "$CSV_FILE") -gt 1 ]]; then
         echo "Importing $table from $CSV_FILE"
         PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "TRUNCATE TABLE \"$table\" RESTART IDENTITY CASCADE;"
-        PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$CSV_FILE' WITH CSV HEADER;"
+        
+        if [[ "$table" == "userOrgs" ]]; then
+            # Special handling for userOrgs - get the actual user ID and update CSV on the fly
+            echo "Special handling for userOrgs table - updating userId with actual system user ID"
+            ACTUAL_USER_ID=$(PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -t -c "SELECT id FROM \"user\" LIMIT 1;" | xargs)
+            
+            # Create a temporary CSV with the correct userId
+            TEMP_CSV="/tmp/userOrgs_temp.csv"
+            head -n 1 "$CSV_FILE" > "$TEMP_CSV"  # Copy header
+            tail -n +2 "$CSV_FILE" | sed "s/^[^,]*/$ACTUAL_USER_ID/" >> "$TEMP_CSV"  # Replace first column (userId) with actual ID
+            
+            PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$TEMP_CSV' WITH CSV HEADER;"
+            rm "$TEMP_CSV"  # Clean up temp file
+        else
+            # Normal import for other tables
+            PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$CSV_FILE' WITH CSV HEADER;"
+        fi
     else
         echo "Skipped $table (file missing or empty)"
     fi
 done
+
+echo "Updating userOrg mapping."
+
+# Add this line to your script after the COPY commands:
+PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "UPDATE \"userOrgs\" SET \"userId\" = (SELECT id FROM \"user\" LIMIT 1);"
 
 echo "Import complete."
