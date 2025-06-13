@@ -1,12 +1,22 @@
 #!/bin/bash
 
+# Import CSV data into PostgreSQL
+set -e
+
 # Load environment variables from .env file
 if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
-# Import CSV data into PostgreSQL
-set -e
+# Determine which psql to use
+if [[ -x /usr/bin/psql ]]; then
+  PSQL="/usr/bin/psql"
+elif [[ -x /opt/komoto/psql ]]; then
+  PSQL="/opt/komoto/psql"
+else
+  echo "Error: psql executable not found in /usr/bin or /opt/komoto"
+  exit 1
+fi
 
 PG_CONTAINER_NAME=${POSTGRES_HOST:-pangolin-postgres}
 PG_IP=$(docker network inspect pangolin 2>/dev/null | \
@@ -39,10 +49,10 @@ create_postgres_structure() {
     local pg_db=$PG_DB
 
     # Create database if it doesn't exist
-    PGPASSWORD="$pg_pass" psql -h "$pg_host" -p "$pg_port" -U "$pg_user" -d postgres -c "CREATE DATABASE $PG_DB;" 2>/dev/null || true
+    PGPASSWORD="$pg_pass" $PSQL -h "$pg_host" -p "$pg_port" -U "$pg_user" -d postgres -c "CREATE DATABASE $PG_DB;" 2>/dev/null || true
 
     # Create Pangolin tables based on the actual schema
-    PGPASSWORD="$pg_pass" psql -h "$pg_host" -p "$pg_port" -U "$pg_user" -d "$pg_db" <<'EOF'
+    PGPASSWORD="$pg_pass" $PSQL -h "$pg_host" -p "$pg_port" -U "$pg_user" -d "$pg_db" <<'EOF'
 -- Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -445,7 +455,7 @@ EOF
 
 # Start by delete all the tables that are there
 
-PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" <<EOF
+PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" <<EOF
 DELETE FROM public."domains";
 DELETE FROM public."orgs";
 DELETE FROM public."orgDomains";
@@ -510,23 +520,23 @@ for table in "${TABLES[@]}"; do
     CSV_FILE="$EXPORT_DIR/$table.csv"
     if [[ -f "$CSV_FILE" && $(wc -l < "$CSV_FILE") -gt 1 ]]; then
         echo "Importing $table from $CSV_FILE"
-        PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "TRUNCATE TABLE \"$table\" RESTART IDENTITY CASCADE;"
+        PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "TRUNCATE TABLE \"$table\" RESTART IDENTITY CASCADE;"
         
         if [[ "$table" == "userOrgs" ]]; then
             # Special handling for userOrgs - get the actual user ID and update CSV on the fly
             echo "Special handling for userOrgs table - updating userId with actual system user ID"
-            ACTUAL_USER_ID=$(PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -t -c "SELECT id FROM \"user\" LIMIT 1;" | xargs)
+            ACTUAL_USER_ID=$(PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -t -c "SELECT id FROM \"user\" LIMIT 1;" | xargs)
             
             # Create a temporary CSV with the correct userId
             TEMP_CSV="/tmp/userOrgs_temp.csv"
             head -n 1 "$CSV_FILE" > "$TEMP_CSV"  # Copy header
             tail -n +2 "$CSV_FILE" | sed "s/^[^,]*/$ACTUAL_USER_ID/" >> "$TEMP_CSV"  # Replace first column (userId) with actual ID
             
-            PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$TEMP_CSV' WITH CSV HEADER;"
+            PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$TEMP_CSV' WITH CSV HEADER;"
             rm "$TEMP_CSV"  # Clean up temp file
         else
             # Normal import for other tables
-            PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$CSV_FILE' WITH CSV HEADER;"
+            PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "\COPY \"$table\" FROM '$CSV_FILE' WITH CSV HEADER;"
         fi
     else
         echo "Skipped $table (file missing or empty)"
@@ -536,6 +546,6 @@ done
 echo "Updating userOrg mapping."
 
 # Add this line to your script after the COPY commands:
-PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "UPDATE \"userOrgs\" SET \"userId\" = (SELECT id FROM \"user\" LIMIT 1);"
+PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "UPDATE \"userOrgs\" SET \"userId\" = (SELECT id FROM \"user\" LIMIT 1);"
 
 echo "Import complete."
