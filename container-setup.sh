@@ -161,12 +161,13 @@ http:
         - redirect-to-https
 
     statiq-router:
-        entryPoints:
-            - websecure
-        middlewares:
-            - statiq
-        priority: 100
-        rule: "Host(\`www.${DOMAIN}\`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - statiq
+      service: statiq-service
+      priority: 100
+      rule: "Host(\`www.${DOMAIN}\`)"
 
     middleware-manager-router-redirect:
       rule: "Host(\`middleware-manager.${DOMAIN}\`)"
