@@ -98,6 +98,16 @@ http:
         stsIncludeSubdomains: true
         stsSeconds: 63072000
         stsPreload: true
+    statiq:
+      plugin:
+        statiq:
+          enableDirectoryListing: false
+          indexFiles:
+            - index.html
+            - index.htm
+          root: /var/www/html
+          spaIndex: index.html
+          spaMode: false
 
   routers:
     # HTTP to HTTPS redirect router
@@ -142,6 +152,79 @@ http:
       tls:
         certResolver: letsencrypt
 
+    statiq-router-redirect:
+      rule: "Host(\`www.${DOMAIN}\`)"
+      service: statiq-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+
+    statiq-router:
+        entryPoints:
+            - websecure
+        middlewares:
+            - statiq
+        priority: 100
+        rule: "Host(\`www.${DOMAIN}\`)"
+
+    middleware-manager-router-redirect:
+      rule: "Host(\`middleware-manager.${DOMAIN}\`)"
+      service: middleware-manager-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+
+    middleware-manager-router:
+        entryPoints:
+            - websecure
+        middlewares:
+            - security-headers
+        priority: 100
+        rule: "Host(\`middleware-manager.${DOMAIN}\`)"
+        service: middleware-manager-service
+        tls:
+            certResolver: "letsencrypt"
+
+    komodo-router-redirect:
+      rule: "Host(\`komodo.${DOMAIN}\`)"
+      service: komodo-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+
+    komodo-router:
+        entryPoints:
+            - websecure
+        middlewares:
+            - security-headers
+        priority: 100
+        rule: "Host(\`komodo.${DOMAIN}\`)"
+        service: komodo-service
+        tls:
+            certResolver: "letsencrypt"
+
+    traefik-dashboard-router-redirect:
+      rule: "Host(\`traefik.${DOMAIN}\`)"
+      service: traefik-dashboard-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+
+    traefik-dashboard-router:
+        entryPoints:
+            - websecure
+        middlewares:
+            - security-headers
+        priority: 100
+        rule: "Host(\`traefik.${DOMAIN}\`)"
+        service: traefik-dashboard-service
+        tls:
+            certResolver: "letsencrypt"
+
   services:
     next-service:
       loadBalancer:
@@ -152,6 +235,27 @@ http:
       loadBalancer:
         servers:
           - url: "http://pangolin:3000" # API/WebSocket server
+
+    statiq-service:
+      loadBalancer:
+        servers:
+          - url: "noop@internal"
+
+    middleware-manager-service:
+      loadBalancer:
+        servers:
+          - url: "http://middleware-manager:3456" 
+
+    traefik-dashboard-service:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:8080" 
+
+    komodo-service:
+      loadBalancer:
+        servers:
+          - url: "http://komodo-core-1:9120" 
+
 EOF
 }
 
