@@ -41,7 +41,7 @@ docker network create pangolin
 
 ```bash
 mkdir -p ~/Projects/komodo
-wget -P ~/Projects/komodo https://raw.githubusercontent.com/oidebrett/getcontextware/blob/main/ferretdb.compose.yaml
+wget -P ~/Projects/komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/ferretdb.compose.yaml
 wget -P ~/Projects/komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
 ```
 
