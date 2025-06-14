@@ -101,9 +101,9 @@ services:
         echo '🔧 Running setup script...'
         /container-setup.sh
 
-        # Create compose.yml for services
-        echo '📝 Creating compose.yml for services...'
-        cat > /host-setup/compose.yml << 'EOF'
+        # Create compose.yaml for services
+        echo '📝 Creating compose.yaml for services...'
+        cat > /host-setup/compose.yaml << 'EOF'
         services:
           # Main Pangolin application
           pangolin:
@@ -122,7 +122,7 @@ services:
         # Part 1: Conditionally append standalone postgres if POSTGRES_HOST not the komodo postgres
         if [ -z "$POSTGRES_HOST" ] || [ "$POSTGRES_HOST" != "komodo-postgres-1" ]; then
           echo '🛡️ Adding Standalone Postgres database...'
-          cat >> /host-setup/compose.yml << EOF
+          cat >> /host-setup/compose.yaml << EOF
 
             depends_on:
               postgres:
@@ -150,7 +150,7 @@ services:
         fi
 
         # Append gerbil block (always)
-        cat >> /host-setup/compose.yml << EOF
+        cat >> /host-setup/compose.yaml << EOF
           # Gerbil WireGuard management
 
           gerbil:
@@ -229,7 +229,7 @@ services:
         # Part 2: Conditionally append CrowdSec if CROWDSEC_ENROLLMENT_KEY is set
         if [ -n \"$CROWDSEC_ENROLLMENT_KEY\" ]; then
           echo '🛡️ Adding CrowdSec configuration...'
-          cat >> /host-setup/compose.yml << EOF
+          cat >> /host-setup/compose.yaml << EOF
 
           crowdsec:
             image: crowdsecurity/crowdsec:latest
@@ -264,7 +264,7 @@ services:
         fi
 
         # Append network block (always)
-        cat >> /host-setup/compose.yml << EOF
+        cat >> /host-setup/compose.yaml << EOF
 
         mcpauth:
           image: oideibrett/mcpauth:latest
