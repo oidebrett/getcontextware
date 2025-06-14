@@ -763,6 +763,13 @@ also add to middleware-manager/templates.yml:
       spaMode: "false"
 ```
 
+## Initialization of the DB
+You can initialize the database using
+```
+chmod +x initialize_postgres.sh
+./initialize_postgres.sh
+```
+
 ## 🙌 Thank You
 
 Thanks for following this guide! With Komodo and Pangolin, you now have a powerful foundation for managing and securing your self-hosted applications.
