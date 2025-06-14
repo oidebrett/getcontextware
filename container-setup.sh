@@ -178,15 +178,15 @@ http:
         - redirect-to-https
 
     middleware-manager-router:
-        entryPoints:
-            - websecure
-        middlewares:
-            - security-headers
-        priority: 100
-        rule: "Host(\`middleware-manager.${DOMAIN}\`)"
-        service: middleware-manager-service
-        tls:
-            certResolver: "letsencrypt"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      priority: 100
+      rule: "Host(\`middleware-manager.${DOMAIN}\`)"
+      service: middleware-manager-service
+      tls:
+        certResolver: "letsencrypt"
 
     komodo-router-redirect:
       rule: "Host(\`komodo.${DOMAIN}\`)"
@@ -197,15 +197,15 @@ http:
         - redirect-to-https
 
     komodo-router:
-        entryPoints:
-            - websecure
-        middlewares:
-            - security-headers
-        priority: 100
-        rule: "Host(\`komodo.${DOMAIN}\`)"
-        service: komodo-service
-        tls:
-            certResolver: "letsencrypt"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      priority: 100
+      rule: "Host(\`komodo.${DOMAIN}\`)"
+      service: komodo-service
+      tls:
+        certResolver: "letsencrypt"
 
     traefik-dashboard-router-redirect:
       rule: "Host(\`traefik.${DOMAIN}\`)"
@@ -216,15 +216,32 @@ http:
         - redirect-to-https
 
     traefik-dashboard-router:
-        entryPoints:
-            - websecure
-        middlewares:
-            - security-headers
-        priority: 100
-        rule: "Host(\`traefik.${DOMAIN}\`)"
-        service: traefik-dashboard-service
-        tls:
-            certResolver: "letsencrypt"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      priority: 100
+      rule: "Host(\`traefik.${DOMAIN}\`)"
+      service: traefik-dashboard-service
+      tls:
+        certResolver: "letsencrypt"
+
+    # Add these lines for mcpauth
+    # mcpauth http redirect router
+    mcpauth-router-redirect:
+      rule: "Host(\`oauth.${DOMAIN}\`)"
+      service: mcpauth-service
+      entryPoints:
+        - web
+
+    # mcpauth router
+    mcpauth:
+      rule: "Host(\`oauth.${DOMAIN}\`)"
+      service: mcpauth-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
 
   services:
     next-service:
@@ -256,6 +273,16 @@ http:
       loadBalancer:
         servers:
           - url: "http://komodo-core-1:9120" 
+
+    mcpauth-service:
+      loadBalancer:
+        servers:
+          - url: "http://mcpauth:11000"  # mcpauth auth server
+
+    oauth-service:
+      loadBalancer:
+        servers:
+          - url: "https://oauth.${DOMAIN}"
 
 EOF
 }

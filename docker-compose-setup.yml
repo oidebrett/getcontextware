@@ -264,6 +264,15 @@ services:
         # Append network block (always)
         cat >> /host-setup/docker-compose.yml << EOF
 
+        mcpauth:
+          image: oideibrett/mcpauth:latest
+          environment:
+            - PORT=11000
+            - CLIENT_ID=${CLIENT_ID}
+            - CLIENT_SECRET=${CLIENT_SECRET}
+          ports:
+            - "11000:11000"
+
         networks:
           default:
             external: true
