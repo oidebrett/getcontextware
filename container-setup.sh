@@ -233,6 +233,8 @@ http:
       service: mcpauth-service
       entryPoints:
         - web
+      middlewares:
+        - redirect-to-https
 
     # mcpauth router
     mcpauth:
