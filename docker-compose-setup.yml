@@ -287,9 +287,9 @@ services:
       EOF
 
          # Replace placeholders with actual variable syntax
-        sed -i 's/REPLACE_WITH_CLIENT_ID/\\${CLIENT_ID}/g' /host-setup/compose.yaml
-        sed -i 's/REPLACE_WITH_CLIENT_SECRET/\\${CLIENT_SECRET}/g' /host-setup/compose.yaml
-        sed -i 's/REPLACE_WITH_OAUTH_DOMAIN/\\${OAUTH_DOMAIN}/g' /host-setup/compose.yaml
+        sed -i 's/REPLACE_WITH_CLIENT_ID/\{CLIENT_ID}/g' /host-setup/compose.yaml
+        sed -i 's/REPLACE_WITH_CLIENT_SECRET/\{CLIENT_SECRET}/g' /host-setup/compose.yaml
+        sed -i 's/REPLACE_WITH_OAUTH_DOMAIN/\{OAUTH_DOMAIN}/g' /host-setup/compose.yaml
       
 
         echo '✅ Setup completed! The stack is ready to start.'
