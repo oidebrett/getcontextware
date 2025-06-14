@@ -159,9 +159,9 @@ services:
             container_name: mcpauth
             environment:
               - PORT=11000
-              - CLIENT_ID=^[CLIENT_ID]
-              - CLIENT_SECRET=^[CLIENT_SECRET]
-              - OAUTH_DOMAIN=^[OAUTH_DOMAIN]
+              - CLIENT_ID=REPLACE_WITH_CLIENT_ID
+              - CLIENT_SECRET=REPLACE_WITH_CLIENT_SECRET
+              - OAUTH_DOMAIN=REPLACE_WITH_OAUTH_DOMAIN
             restart: unless-stopped
             ports:
               - "11000:11000"
@@ -287,8 +287,10 @@ services:
       EOF
 
          # Replace placeholders with actual variable syntax
-        sed -i 's/\^\[/\${/g' /host-setup/compose.yaml
-        sed -i 's/\]/}/g' /host-setup/compose.yaml
+        sed -i 's/REPLACE_WITH_CLIENT_ID/\${CLIENT_ID}/g' /host-setup/compose.yaml
+        sed -i 's/REPLACE_WITH_CLIENT_SECRET/\${CLIENT_SECRET}/g' /host-setup/compose.yaml
+        sed -i 's/REPLACE_WITH_OAUTH_DOMAIN/\${OAUTH_DOMAIN}/g' /host-setup/compose.yaml
+      
 
         echo '✅ Setup completed! The stack is ready to start.'
         echo '📊 Start your services with: docker compose up -d'
