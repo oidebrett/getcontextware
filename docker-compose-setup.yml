@@ -266,14 +266,14 @@ services:
         # Append network block (always)
         cat >> /host-setup/compose.yaml << EOF
 
-        mcpauth:
-          image: oideibrett/mcpauth:latest
-          environment:
-            - PORT=11000
-            - CLIENT_ID=${CLIENT_ID}
-            - CLIENT_SECRET=${CLIENT_SECRET}
-          ports:
-            - "11000:11000"
+          mcpauth:
+            image: oideibrett/mcpauth:latest
+            environment:
+              - PORT=11000
+              - CLIENT_ID=${CLIENT_ID}
+              - CLIENT_SECRET=${CLIENT_SECRET}
+            ports:
+              - "11000:11000"
 
         networks:
           default:
