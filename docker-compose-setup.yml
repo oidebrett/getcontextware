@@ -21,7 +21,8 @@ services:
       - CROWDSEC_ENROLLMENT_KEY=${CROWDSEC_ENROLLMENT_KEY:-}
       - STATIC_PAGE=${STATIC_PAGE:-}
       - CLIENT_ID=${CLIENT_ID:-}
-      - CLIENT_SECRET=${CLIENT_SECRET:-}    
+      - CLIENT_SECRET=${CLIENT_SECRET:-}
+      - OAUTH_DOMAIN=${OAUTH_DOMAIN:-}
     command: |
       sh -c "
         # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
@@ -160,6 +161,8 @@ services:
               - PORT=11000
               - CLIENT_ID=${CLIENT_ID}
               - CLIENT_SECRET=${CLIENT_SECRET}
+              - OAUTH_DOMAIN=${OAUTH_DOMAIN}
+            restart: unless-stopped
             ports:
               - "11000:11000"
 

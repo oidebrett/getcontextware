@@ -745,6 +745,7 @@ if you want to set up OAuth
 ```
 CLIENT_ID=YOUR_CLIENT_ID
 CLIENT_SECRET=YOUR_CLIENT_SECRET
+OAUTH_DOMAIN=oauth.yourdomain.com
 ```
 
 also add to middleware-manager/templates.yml:
