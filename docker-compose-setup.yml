@@ -291,7 +291,10 @@ services:
         sed -i 's/REPLACE_WITH_CLIENT_SECRET/$$\{CLIENT_SECRET}/g' /host-setup/compose.yaml
         sed -i 's/REPLACE_WITH_OAUTH_DOMAIN/$$\{OAUTH_DOMAIN}/g' /host-setup/compose.yaml
 
-      
+        # Append network block (always)
+        cat >> /host-setup/.env << EOF
+      OAUTH_DOMAIN=${OAUTH_DOMAIN}
+      EOF
 
         echo '✅ Setup completed! The stack is ready to start.'
         echo '📊 Start your services with: docker compose up -d'
