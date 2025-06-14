@@ -159,9 +159,9 @@ services:
             container_name: mcpauth
             environment:
               - PORT=11000
-              - CLIENT_ID=${CLIENT_ID}
-              - CLIENT_SECRET=${CLIENT_SECRET}
-              - OAUTH_DOMAIN=${OAUTH_DOMAIN}
+              - CLIENT_ID=__CLIENT_ID__
+              - CLIENT_SECRET=__CLIENT_SECRET__
+              - OAUTH_DOMAIN=__OAUTH_DOMAIN__
             restart: unless-stopped
             ports:
               - "11000:11000"
@@ -285,7 +285,10 @@ services:
             external: true
             name: pangolin
       EOF
-      
+
+         # Replace placeholders with actual variable syntax
+        sed -i 's/__\([^_]*\)__/\${\1}/g') /host-setup/compose.yaml
+
         echo '✅ Setup completed! The stack is ready to start.'
         echo '📊 Start your services with: docker compose up -d'
         echo '🌐 Access at: https://'"$$ADMIN_SUBDOMAIN"'.'"$$DOMAIN"
