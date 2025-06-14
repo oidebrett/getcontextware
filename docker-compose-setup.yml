@@ -22,7 +22,7 @@ services:
       - STATIC_PAGE=${STATIC_PAGE:-}
       - CLIENT_ID=${CLIENT_ID:-}
       - CLIENT_SECRET=${CLIENT_SECRET:-}
-      - OAUTH_DOMAIN=${OAUTH_DOMAIN:-}
+      - OAUTH_DOMAIN=oauth.${DOMAIN}
     command: |
       sh -c "
         # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
