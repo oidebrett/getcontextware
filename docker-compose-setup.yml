@@ -151,8 +151,18 @@ services:
 
         # Append gerbil block (always)
         cat >> /host-setup/compose.yaml << EOF
-          # Gerbil WireGuard management
 
+          # Auth management
+          mcpauth:
+            image: oideibrett/mcpauth:latest
+            environment:
+              - PORT=11000
+              - CLIENT_ID=${CLIENT_ID}
+              - CLIENT_SECRET=${CLIENT_SECRET}
+            ports:
+              - "11000:11000"
+
+          # Gerbil WireGuard management
           gerbil:
             image: fosrl/gerbil:1.0.0
             container_name: gerbil
@@ -265,16 +275,7 @@ services:
 
         # Append network block (always)
         cat >> /host-setup/compose.yaml << EOF
-
-          mcpauth:
-            image: oideibrett/mcpauth:latest
-            environment:
-              - PORT=11000
-              - CLIENT_ID=${CLIENT_ID}
-              - CLIENT_SECRET=${CLIENT_SECRET}
-            ports:
-              - "11000:11000"
-
+        
         networks:
           default:
             external: true
