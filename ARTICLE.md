@@ -740,6 +740,13 @@ if you want to include a static landing page
 STATIC_PAGE=true
 ```
 
+
+if you want to set up OAuth
+```
+CLIENT_ID=YOUR_CLIENT_ID
+CLIENT_SECRET=YOUR_CLIENT_SECRET
+```
+
 also add to middleware-manager/templates.yml:
 ```
 - id: "statiq"

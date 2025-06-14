@@ -20,6 +20,8 @@ services:
       - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
       - CROWDSEC_ENROLLMENT_KEY=${CROWDSEC_ENROLLMENT_KEY:-}
       - STATIC_PAGE=${STATIC_PAGE:-}
+      - CLIENT_ID=${CLIENT_ID:-}
+      - CLIENT_SECRET=${CLIENT_SECRET:-}    
     command: |
       sh -c "
         # This will be set to true to enable CrowdSec config setup only if you have provided a CROWDSEC_ENROLLMENT_KEY
