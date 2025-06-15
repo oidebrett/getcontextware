@@ -613,7 +613,7 @@ if [ -n "$STATIC_PAGE" ]; then
             
             // Show loading indicator
             loadingIndicator.classList.remove('hidden');
-            titleElement.textContent = \`Loading ${title}...\`;
+            titleElement.textContent = \`Loading $\{title}...\`;
             
             // Hide welcome screen and show iframe
             welcomeScreen.classList.add('hidden');
@@ -707,14 +707,14 @@ if [ -n "$STATIC_PAGE" ]; then
                                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                             </svg>
                         </div>
-                        <h2 class="text-2xl font-bold text-yellow-400 mb-2">${title} Cannot Be Embedded</h2>
+                        <h2 class="text-2xl font-bold text-yellow-400 mb-2">$\{title} Cannot Be Embedded</h2>
                         <p class="text-yellow-200 mb-4">This application blocks iframe embedding for security reasons.</p>
                         <div class="space-y-3">
-                            <button onclick="window.open('${url}', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" 
+                            <button onclick="window.open('$\{url}', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" 
                                     class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 mr-3">
                                 Open in New Window
                             </button>
-                            <button onclick="window.open('${url}', '_blank')" 
+                            <button onclick="window.open('$\{url}', '_blank')" 
                                     class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200">
                                 Open in New Tab
                             </button>
@@ -727,7 +727,7 @@ if [ -n "$STATIC_PAGE" ]; then
                 </div>
             \`;
             welcomeScreen.classList.remove('hidden');
-            titleElement.textContent = `${title} - Blocked`;
+            titleElement.textContent = \`$\{title} - Blocked\`;
         }
         
         function updateActiveItem(element) {
