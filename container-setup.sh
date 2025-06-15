@@ -712,7 +712,7 @@ if [ -n "$STATIC_PAGE" ]; then
                         <div class="space-y-3">
                             <button onclick="window.open('\${url}', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" 
                                     class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 mr-3">
-                                Open in New Window
+                                Open in New Window!
                             </button>
                             <button onclick="window.open('\${url}', '_blank')" 
                                     class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200">
