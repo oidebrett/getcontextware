@@ -91,7 +91,7 @@ http:
           Server: ""
           X-Powered-By: ""
           X-Forwarded-Proto: "https"
-          Content-Security-Policy: "frame-ancestors 'self' https://www.mcpgateway.online"
+          Content-Security-Policy: "frame-ancestors 'self' https://www.${DOMAIN}"
         contentTypeNosniff: true
         referrerPolicy: "strict-origin-when-cross-origin"
         forceSTSHeader: true
