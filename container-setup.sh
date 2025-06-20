@@ -472,9 +472,8 @@ if [ -n "$STATIC_PAGE" ]; then
                             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
                         </svg>
                     </div>
-                    <div class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        <div class="text-lg font-semibold text-white">Home</div>
-                        <div class="text-sm text-gray-300">Welcome page</div>
+                    <div class="ml-2 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-lg font-semibold text-cyan-400 truncate">Home</div>
                     </div>
                 </div>
 
@@ -484,9 +483,8 @@ if [ -n "$STATIC_PAGE" ]; then
                         <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/pangolin.webp" alt="Pangolin Icon" class="w-6 h-6 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div class="w-6 h-6 bg-cyan-400 rounded flex items-center justify-center text-xs font-bold text-gray-900" style="display:none;">P</div>
                     </div>
-                    <div class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        <div class="text-lg font-semibold text-cyan-400">Pangolin</div>
-                        <div class="text-sm text-gray-300">Reverse proxy management</div>
+                    <div class="ml-2 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-lg font-semibold text-cyan-400 truncate">Pangolin</div>
                     </div>
                 </div>
 
@@ -496,10 +494,9 @@ if [ -n "$STATIC_PAGE" ]; then
                         <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/komodo.webp" alt="Komodo Icon" class="w-6 h-6 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div class="w-6 h-6 bg-cyan-400 rounded flex items-center justify-center text-xs font-bold text-gray-900" style="display:none;">K</div>
                     </div>
-                    <div class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        <div class="text-lg font-semibold text-cyan-400">Komodo</div>
-                        <div class="text-sm text-gray-300">Build and deploy tool</div>
-                    </div>
+                    <div class="ml-2 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-lg font-semibold text-cyan-400 truncate">Komodo</div>
+                    </div>                    
                 </div>
 
                 <!-- Middleware Manager -->
@@ -508,10 +505,9 @@ if [ -n "$STATIC_PAGE" ]; then
                         <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/middleware-manager.webp" alt="Middleware Icon" class="w-6 h-6 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div class="w-6 h-6 bg-cyan-400 rounded flex items-center justify-center text-xs font-bold text-gray-900" style="display:none;">M</div>
                     </div>
-                    <div class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        <div class="text-lg font-semibold text-cyan-400">Middleware Manager</div>
-                        <div class="text-sm text-gray-300">Traefik middleware manager</div>
-                    </div>
+                    <div class="ml-2 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-lg font-semibold text-cyan-400 truncate">Middleware Manager</div>
+                    </div>                    
                 </div>
 
                 <!-- Traefik -->
@@ -520,10 +516,9 @@ if [ -n "$STATIC_PAGE" ]; then
                         <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/webp/traefik.webp" alt="Traefik Icon" class="w-6 h-6 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div class="w-6 h-6 bg-cyan-400 rounded flex items-center justify-center text-xs font-bold text-gray-900" style="display:none;">T</div>
                     </div>
-                    <div class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        <div class="text-lg font-semibold text-cyan-400">Traefik Dashboard</div>
-                        <div class="text-sm text-gray-300">Application proxy</div>
-                    </div>
+                    <div class="ml-2 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-lg font-semibold text-cyan-400 truncate">Traefik</div>
+                    </div>                    
                 </div>
             </nav>
         </div>
@@ -635,7 +630,7 @@ if [ -n "$STATIC_PAGE" ]; then
                     // Likely blocked by X-Frame-Options or CSP
                     handleIframeBlocked(url, title);
                 }
-            }, 3000);
+            }, 10000);
             
             // Handle iframe load success
             iframe.onload = function() {
