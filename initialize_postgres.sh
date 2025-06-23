@@ -455,20 +455,20 @@ EOF
 
 # Start by delete all the tables that are there
 
-PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" <<EOF
-DELETE FROM public."orgDomains";
-DELETE FROM public."orgs";
-DELETE FROM public."sites";
-DELETE FROM public."resources";
-DELETE FROM public."targets";
-DELETE FROM public."roles";
-DELETE FROM public."userOrgs";
-DELETE FROM public."roleActions";
-DELETE FROM public."roleSites";
-DELETE FROM public."userSites";
-DELETE FROM public."roleResources";
-DELETE FROM public."resourceRules";
-EOF
+#PGPASSWORD="$PG_PASS" $PSQL -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" <<EOF
+#DELETE FROM public."orgDomains";
+#DELETE FROM public."orgs";
+#DELETE FROM public."sites";
+#DELETE FROM public."resources";
+#DELETE FROM public."targets";
+#DELETE FROM public."roles";
+#DELETE FROM public."userOrgs";
+#DELETE FROM public."roleActions";
+#DELETE FROM public."roleSites";
+#DELETE FROM public."userSites";
+#DELETE FROM public."roleResources";
+#DELETE FROM public."resourceRules";
+#EOF
 
 # Create PostgreSQL structure
 create_postgres_structure "$PG_HOST" "$PG_PORT" "$PG_USER" "$PG_PASS" "$PG_DB"
