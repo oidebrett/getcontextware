@@ -737,7 +737,7 @@ POSTGRES_HOST=komodo-postgres-1
 
 if you want to include a static landing page
 ```
-STATIC_PAGE=true
+STATIC_PAGE_DOMAIN=www
 ```
 
 

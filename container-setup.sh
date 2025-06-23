@@ -91,7 +91,7 @@ http:
           Server: ""
           X-Powered-By: ""
           X-Forwarded-Proto: "https"
-          Content-Security-Policy: "frame-ancestors 'self' https://www.${DOMAIN}"
+          Content-Security-Policy: "frame-ancestors 'self' https://${STATIC_PAGE_DOMAIN}.${DOMAIN}"
         contentTypeNosniff: true
         referrerPolicy: "strict-origin-when-cross-origin"
         forceSTSHeader: true
@@ -153,7 +153,7 @@ http:
         certResolver: letsencrypt
 
     statiq-router-redirect:
-      rule: "Host(\`www.${DOMAIN}\`)"
+      rule: "Host(\`${STATIC_PAGE_DOMAIN}.${DOMAIN}\`)"
       service: statiq-service
       entryPoints:
         - web
@@ -167,7 +167,7 @@ http:
         - statiq
       service: statiq-service
       priority: 100
-      rule: "Host(\`www.${DOMAIN}\`)"
+      rule: "Host(\`${STATIC_PAGE_DOMAIN}.${DOMAIN}\`)"
 
     middleware-manager-router-redirect:
       rule: "Host(\`middleware-manager.${DOMAIN}\`)"
@@ -373,6 +373,26 @@ EOF
 
 echo "✅ config.yml created"
 
+# Function to update domain in CSV files
+update_domains_in_csv() {
+    echo "🔄 Updating domain references in CSV files..."
+    
+    # Create postgres_export directory if it doesn't exist
+    mkdir -p /host-setup/postgres_export
+    
+    # Check if resources.csv exists
+    if [ -f "/host-setup/postgres_export/resources.csv" ]; then
+        # Replace yourdomain.com with the DOMAIN variable in resources.csv
+        sed -i "s/yourdomain\.com/${DOMAIN}/g" /host-setup/postgres_export/resources.csv
+        echo "✅ Updated domain references in resources.csv"
+    else
+        echo "⚠️ resources.csv not found, skipping domain update"
+    fi
+}
+
+# Call the function to update domains in CSV files
+update_domains_in_csv
+
 # Create traefik_config.yml
 echo "📝 Creating traefik_config.yml..."
 cat > /host-setup/config/traefik/traefik_config.yml << EOF
@@ -433,7 +453,7 @@ EOF
 echo "✅ traefik_config.yml created"
 
 # Check if static page should be enabled
-if [ -n "$STATIC_PAGE" ]; then
+if [ -n "$STATIC_PAGE_DOMAIN" ]; then
     echo "🛡️ Statuc page detected - setting up ..."
     
     # Create basic index.html
@@ -833,7 +853,7 @@ http:
         certResolver: letsencrypt
 
     statiq-router-redirect:
-      rule: "Host(\`www.${DOMAIN}\`)"
+      rule: "Host(\`${STATIC_PAGE_DOMAIN}.${DOMAIN}\`)"
       service: statiq-service
       entryPoints:
         - web
@@ -846,7 +866,7 @@ http:
         middlewares:
             - statiq
         priority: 100
-        rule: "Host(\`www.${DOMAIN}\`)"
+        rule: "Host(\`${STATIC_PAGE_DOMAIN}.${DOMAIN}\`)"
         service: statiq-service
         tls:
             certResolver: "letsencrypt"
