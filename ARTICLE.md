@@ -769,6 +769,11 @@ You can initialize the database using
 chmod +x initialize_postgres.sh
 ./initialize_postgres.sh
 ```
+Note: if you run into difficulties you can nuke the postgres database but you must remove the volumes like this
+
+```
+docker compose -p komodo -f ferretdb.compose.yaml --env-file compose.env down --remove-orphans --volumes --rmi all
+```
 
 ## 🙌 Thank You
 

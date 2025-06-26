@@ -562,18 +562,28 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             welcomeScreen.classList.add('hidden');
             iframe.classList.remove('hidden');
             
-            // Load the application
-            iframe.src = url;
+            // Clear any existing timeouts
+            if (window.iframeLoadTimeout) {
+                clearTimeout(window.iframeLoadTimeout);
+            }
+            
+            // Special handling for Traefik dashboard
+            if (url.includes('traefik') && url.includes('/dashboard/')) {
+                // For Traefik dashboard, use a different approach to avoid parameter issues
+                iframe.src = url;
+            } else {
+                // For other URLs, use cache-busting parameter
+                iframe.src = url + (url.includes('?') ? '&' : '?') + 'cache=' + new Date().getTime();
+            }
             
             // Update active sidebar item
             updateActiveItem(element);
             
             // Set up iframe blocking detection
             let iframeBlocked = false;
-            let loadTimeout;
             
             // Timeout to detect if iframe is blocked (most blocking happens immediately)
-            loadTimeout = setTimeout(() => {
+            window.iframeLoadTimeout = setTimeout(() => {
                 if (!iframeBlocked) {
                     // Likely blocked by X-Frame-Options or CSP
                     handleIframeBlocked(url, title);
@@ -582,7 +592,7 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             
             // Handle iframe load success
             iframe.onload = function() {
-                clearTimeout(loadTimeout);
+                clearTimeout(window.iframeLoadTimeout);
                 
                 try {
                     // Try to access iframe content to detect if it's blocked
@@ -624,7 +634,7 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             
             // Handle iframe load errors
             iframe.onerror = function() {
-                clearTimeout(loadTimeout);
+                clearTimeout(window.iframeLoadTimeout);
                 handleIframeBlocked(url, title);
             };
         }
@@ -692,7 +702,12 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             
             if (iframe.src !== 'about:blank') {
                 loadingIndicator.classList.remove('hidden');
-                iframe.src = iframe.src; // Reload the iframe
+                // Force a fresh reload by adding a new timestamp
+                const currentUrl = iframe.src;
+                const baseUrl = currentUrl.split('?')[0].split('&cache=')[0];
+                const timestamp = new Date().getTime();
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                iframe.src = `${baseUrl}${separator}cache=${timestamp}`;
             }
         }
         
