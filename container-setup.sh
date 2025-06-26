@@ -562,16 +562,8 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             welcomeScreen.classList.add('hidden');
             iframe.classList.remove('hidden');
             
-            // Force iframe refresh by adding timestamp to prevent caching issues
-            const timestamp = new Date().getTime();
-            const separator = url.includes('?') ? '&' : '?';
-            const urlWithTimestamp = `${url}${separator}_t=${timestamp}`;
-            
             // Load the application
-            iframe.src = urlWithTimestamp;ator}_t=${timestamp}`;
-            
-            // Load the application
-            iframe.src = urlWithTimestamp;
+            iframe.src = url;
 
             // Update active sidebar item
             updateActiveItem(element);
@@ -700,12 +692,7 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             
             if (iframe.src !== 'about:blank') {
                 loadingIndicator.classList.remove('hidden');
-                // Force a fresh reload by adding a new timestamp
-                const currentUrl = iframe.src;
-                const baseUrl = currentUrl.split('?')[0].split('&_t=')[0];
-                const timestamp = new Date().getTime();
-                const separator = baseUrl.includes('?') ? '&' : '?';
-                iframe.src = `${baseUrl}${separator}_t=${timestamp}`;
+                iframe.src = iframe.src; // Reload the iframe
             }
         }
         
