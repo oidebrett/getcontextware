@@ -11,11 +11,14 @@ fi
 # Determine which psql to use
 if [[ -x /usr/bin/psql ]]; then
   PSQL="/usr/bin/psql"
-elif [[ -x /opt/komoto/psql ]]; then
-  PSQL="/opt/komoto/psql"
 else
-  echo "Error: psql executable not found in /usr/bin or /opt/komoto"
-  exit 1
+  echo "psql executable not found, installing postgresql-client..."
+  apt-get update -qq && apt-get install -y postgresql-client -qq
+  PSQL="/usr/bin/psql"
+  if [[ ! -x $PSQL ]]; then
+    echo "Error: Failed to install psql. Please install postgresql-client manually."
+    exit 1
+  fi
 fi
 
 PG_CONTAINER_NAME=${POSTGRES_HOST:-pangolin-postgres}
