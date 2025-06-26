@@ -561,9 +561,20 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
             // Hide welcome screen and show iframe
             welcomeScreen.classList.add('hidden');
             iframe.classList.remove('hidden');
-            
-            // Load the application
-            iframe.src = url;
+
+            if (url.includes('traefik') && url.includes('/dashboard/')) {
+              // For Traefik dashboard, use a different approach to avoid parameter issues
+              iframe.src = url;
+            }
+            else {
+              // Force iframe refresh by adding timestamp to prevent caching issues
+              const timestamp = new Date().getTime();
+              const separator = url.includes('?') ? '&' : '?';
+              const urlWithTimestamp = url+separator+'_t='+timestamp;
+
+              // Load the application
+              iframe.src = urlWithTimestamp;
+            }            
 
             // Update active sidebar item
             updateActiveItem(element);
@@ -694,6 +705,7 @@ if [ -n "$STATIC_PAGE_DOMAIN" ]; then
                 loadingIndicator.classList.remove('hidden');
                 iframe.src = iframe.src; // Reload the iframe
             }
+            
         }
         
         // Initialize with welcome screen active
